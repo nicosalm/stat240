@@ -1,0 +1,16 @@
+# Additional Notes
+
+## Week 2, Lecture 1 (9/11)
+
+```{r setup, include=TRUE}
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      error = TRUE, fig.height = 4)
+library(tidyverse)
+```
+
+```{r chunks, include=FALSE}
+# insert new chunk under code, or with CMD+Opt+I 
+```
+
+
