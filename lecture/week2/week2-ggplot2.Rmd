@@ -1364,6 +1364,11 @@ g + theme_bw()
 g + theme_minimal()
 ```
 
+```{r}
+# this is a demo from lecture
+ggplot(mendota,aes(x=duration,color=period50,fill=period50,linetype=period50)) + geom_density(alpha=0.3)
+```
+
 -   The [tidyverse list of complete
     themes](https://ggplot2.tidyverse.org/reference/ggtheme.html) are
     part of the tidyverse online reference.
