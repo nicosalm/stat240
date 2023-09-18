@@ -359,7 +359,7 @@ ggplot(mendota, aes(x = duration)) +
 
 ```{r histogram-fancy}
 ggplot(mendota, aes(x = duration)) +
-  geom_histogram(fill = "hotpink",
+  geom_histogram(fill = "lightblue",
                  color = "black",
                  binwidth = 7,
                  boundary = 0) +
@@ -396,7 +396,7 @@ ggplot(mendota, aes(x = duration)) +
 
 ```{r}
 ggplot(mendota, aes(x = duration)) +
-  geom_histogram(fill = "hotpink",
+  geom_histogram(fill = "lightblue",
                  color = "black",
                  binwidth = 7,
                  center = 0) +
@@ -612,7 +612,7 @@ ggplot(mendota, aes(x = duration)) +
 ```{r}
 ggplot(mendota, aes(x = as.character(decade), y = duration)) +
   geom_boxplot(fill = "papayawhip",
-               color = "blue") +
+               color = "black") +
   ylab("Total days closed by ice") +
   xlab("Decade") +
   ggtitle("Lake Mendota Freeze Durations, 1855-2023")
