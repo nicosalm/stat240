@@ -106,7 +106,15 @@ where Lake Monona was at least 50% covered with ice between 40 to 70 days?
 
 ### Response
 
-REPLACE THIS TEXT WITH YOUR RESPONSE
+```{r response1} 
+count_winters = monona %>%
+  filter(duration >= 40 & duration <= 70) %>%
+  nrow()
+
+count_winters # 11 winters
+```
+
+11
 
 
 
@@ -122,7 +130,13 @@ REPLACE THIS TEXT WITH YOUR RESPONSE
 
 ```{r problem2}
 ggplot(monona, aes(x = duration)) +
-  geom_histogram()
+  geom_histogram(boundary=70,
+                 binwidth=5,
+                 fill="cyan",
+                 color="forestgreen") +
+  labs(x = "Days Closed with Ice",
+       y = "Total",
+       title = "Distribution of Ice Closure Duration")
 ```
 
 
@@ -141,14 +155,16 @@ ggplot(monona, aes(x = year1, y = duration)) +
 
 ### Response
 
-REPLACE THIS TEXT WITH YOUR RESPONSE
+Aids the eye in seeing patterns in the presence of over plotting by creating a smooth line; 
+the arg se=FALSE allows for removal of the standard error line
+
 
 
 - Describe the pattern of the curve.
 
 ### Response
 
-REPLACE THIS TEXT WITH YOUR RESPONSE
+Appears roughly linear and decreasing
 
 
 
@@ -156,7 +172,7 @@ REPLACE THIS TEXT WITH YOUR RESPONSE
 
 ### Response
 
-REPLACE THIS TEXT WITH YOUR RESPONSE
+The approximate duration value of the smooth curve around 1875 is ~115
 
 
 
@@ -164,8 +180,7 @@ REPLACE THIS TEXT WITH YOUR RESPONSE
 
 ### Response
 
-REPLACE THIS TEXT WITH YOUR RESPONSE
-
+The approximate duration value of the smooth curve around 1875 is ~90
 
 
 
@@ -178,14 +193,17 @@ REPLACE THIS TEXT WITH YOUR RESPONSE
 - There is an informative plot title
 
 ```{r problem4}
-ggplot(monona, aes(y=duration)) 
+ggplot(monona, aes(y=duration)) +
+  geom_boxplot(fill="yellow", color="magenta")+
+  labs(y = "Days Closed by Ice",
+       title = "Distribution of Days Lake Monona Has Been Closed by Ice")
 ```
 
 - What is the approximate median number of days Lake Monona has been closed with ice?  
 
 ### Response
 
-REPLACE THIS TEXT WITH YOUR RESPONSE
+103-104 is the median number of days closed.
 
 
 
@@ -195,6 +213,14 @@ REPLACE THIS TEXT WITH YOUR RESPONSE
 - has informative axis labels
 
 ```{r}
+# - ff_cat --- a categorical variable of the half-month of the first freeze
+
+ggplot(monona, aes(x=ff_cat)) + 
+  geom_bar(fill="lightblue", color="black")+
+  labs(title="First freezes occuring over Lake Monona",
+       subtitle = "Half-month interval measures",
+       x = "Interval",
+       y = "Count of occurences")
 
 ```
 
@@ -203,7 +229,7 @@ REPLACE THIS TEXT WITH YOUR RESPONSE
 
 6. Briefly explain why you needed to use the command `geom_bar()` and not `geom_col()` to make the plot in the previous problem.
 
-REPLACE THIS TEXT WITH YOUR RESPONSE
+We need to use geom_bar() and not geom_col() because we are only working with a single variable, where the height is proportional to the number of cases in each group; conversely, geom_col() takes 2 variables.
 
 
   7. The following chunk creates a scatter plot with `ff_x` on the x axis and `duration` on the y axis, with points colored by `period50`.
@@ -221,7 +247,12 @@ change the title of the color legend to say "Time Period" instead of "period50".
 ggplot(monona, aes(x = ff_x, y = duration, color = period50)) +
   geom_point() +
   geom_smooth(se = FALSE, method = "lm") +
-  scale_color_viridis_d()
+  scale_color_viridis_d(name = "Time Periods") + # renamed legend
+  labs(
+    title = "Relationship between First Freeze Date and Ice Duration", 
+    x = "Days after June 30",
+    y = "Duration of Ice Closure") +
+  theme_minimal()
 ```
 
 After making the graph,
@@ -229,14 +260,25 @@ suppose that the date of the first freeze in some year was December 27, which is
 Based on an examination of the graph,
 briefly explain how your prediction of the total duration that Lake Monona is closed by ice would differ if the winter was in the 1870s versus the present?
 
+We see a clear downward trend in duration that the lake is closed by ice, so it is fair to conclude that the total duration Lake Monona is closed by ice would be greater in the 1870s than in the present.
+
 
 
   8. The previous plot used color to distinguish which points were in each 50-year period of time. Write code to plot the same data in a scatter plot, but use a different facet (use `facet_wrap()`, following an example in the lecture notes) for each of the four different 50-year periods of time.
 
 ```{r}
-
+ggplot(monona, aes(x = ff_x, y = duration)) +
+  geom_point() +
+  geom_smooth(se = FALSE, method = "lm") +
+  facet_wrap(~ period50, ncol = 2) +  # Use period50 to create facets, with 2 columns
+  labs(
+    title = "Relationship between First Freeze Date and Ice Duration", 
+    x = "Days after June 30",
+    y = "Duration of Ice Closure"
+  ) +
+  theme_minimal()
 ```
 
 Does color or faceting make it easier to compare the relationship between first date of closing with ice and the total duration of the freeze among different 50-year time periods?
 
-REPLACE THIS TEXT WITH YOUR RESPONSE
+I would suggest faceting, because each facet (or panel) focuses on one 50-year period, making it clear and unambiguous. Since each time period has its own panel, there's less risk of overplotting. You can also easily make horizontal or vertical comparisons on the grid. One of the cons is that it does require more space.
