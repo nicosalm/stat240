@@ -1,0 +1,456 @@
+---
+author: "Nico Salm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message=FALSE, warning = FALSE,
+                      fig.height = 3,
+                      error = TRUE)
+library(tidyverse)
+##library(lubridate)
+source("../../scripts/viridis.R")
+library(viridisLite)
+```
+
+## Assignment 3
+
+#### Due Friday, September 29 11:59 PM CT
+
+### Preliminaries
+
+Code to read in data and source the *viridis.R* file assumes: (1) that you have the following directories and files, where COURSE is the path to your top course directory (it might be something like "~/Documents/stat240"); (2) that you have set the *hw03* directory to be your working directory; and (3) that you have installed both the **tidyverse** and **viridisLite** packages.
+
+- Directories
+    - COURSE/homework/
+    - COURSE/homework/hw03/
+    - COURSE/data/
+    - COURSE/scripts/
+- Files
+    - COURSE/homework/hw03/hw03.Rmd
+    - COURSE/data/madison-weather-official-1969-2022.csv
+    - COURSE/data/exoplanets-clean-through-2022.csv
+    - COURSE/scripts/viridis.R
+
+#### Notes
+
+- You will need to install the `viridisLite` package if you have not done so already.
+- Code in the file `viridis.R` changes the default color scheme in `ggplot2` so that:
+    - default colors are easier to perceive by people with a variety of color blindness conditions
+    - when color is used to represent a continuous variable, perception of changes of shade are more even than in the default choice.
+- Replace the text "YOUR NAME HERE" in the YAML section with your name.
+- Edit this file, answer the questions, knit, and submit your solutions by uploading the resulting HTML file to the course Canvas site.  Be sure to review your HTML and ensure that your solutions appear as you expect prior to submitting.
+- Post questions using Discord, visit the Learning Center, or attend office hours if you have questions.
+
+### Aims
+
+- Refine and expand **ggplot2** skills for making plots, including:
+    - changing axis scales
+    - using color and size
+    - making bar plots for categorical data
+    - breaking plots over multiple facets
+- Demonstrate skills from **dplyr** for wrangling and summarizing data
+
+
+### Problems
+
+The following R chunk reads in the default exoplanet data,
+selects some variables, and changes some variable names.
+*Note: This data set is not the same as what you used in discussion this week. It has already been reduced to a file with one unique exoplanet per row and variables have been selected and renamed.*
+
+```{r read-planet-data}
+## Read in the csv file
+planets = read_csv("../../data/exoplanets-clean-through-2022.csv") 
+```
+
+
+  1. A small number of planets have both an estimated mass AND an estimated radius less than those of the Earth.  What are the names of these planets, what method(s) were used to detect them, and in what year were they discovered?
+
+- Create a data summary table with the star name, planet name, method, year, mass, and radius of the planets that have **both** an estimated mass < 1 Earth mass **and** an estimated radius < 1 Earth radius.  
+- Order the rows increasing by mass.
+- Print the entire table.
+
+```{r}
+
+q1_result = planets %>% 
+  filter(mass < 1, radius < 1) %>% # mass and radius are already relative to Earth; 1 = exact mass of earth, <1 = less than mass of earth, etc.
+  arrange(mass) %>% 
+  select(star, planet, method, year, mass, radius)
+
+q1_result
+```
+
+
+
+
+  2. Using the exoplanet data table `planets`:
+
+- filter so that you only use planets discovered by the radial velocity method;
+- remove cases where either of the variables `year` or `mass` (or both) are missing;
+- for this subset of exoplanets, create a table with a data summary with the number of planets discovered and the minimum mass of these planets by year
+- print the first 10 rows and all columns of this data summary
+
+Then, make a scatter plot of this data such that:
+
+- the size of points are proportional to the number of planets discovered that year
+- the y-axis is on the log10 scale *(hint:  consider `scale_y_continuous()` or `scale_y_log10()`)*
+- the axes have descriptive labels, and
+- the plot contains an informative title.
+
+Note, a scatter plot where the size of the points is proportional to a numerical variable is called a *bubble plot*.
+
+In addition to creating the graphic, respond to the question below the R chunk.
+
+```{r}
+q2_result = planets %>% 
+  
+  # Filtering
+  # filter for radial velocity and removing missing values
+  filter(method == "Radial Velocity", !is.na(year), !is.na(mass)) %>% 
+  
+  # group by year
+  group_by(year) %>% 
+  
+  # summarize
+  summarize(
+    n = n(),
+    min_mass = min(mass, na.rm = TRUE)
+  ) %>% 
+  
+  arrange(year)
+
+  # take first 10 rows and all corresponding columns
+  head(q2_result, 10)
+  
+  # Plotting
+  q2_result %>% 
+    ggplot(aes(year, min_mass, size = n)) +
+    geom_point(alpha = 0.7) + 
+    scale_y_log10() + 
+    labs(
+      title = "Exoplanets by Radial Velocity",
+      subtitle = "Including number and minimum mass",
+      x = "Year",
+      y = "Minimum Mass (log)",
+      size = "Number of Planets Discovered"
+    ) +
+    theme_linedraw()
+```
+
+**Describe the pattern between year and minimum mass of planet discovered using Radial Velocity.**
+
+> There is a trend of decreasing minimum mass for the planets discovered. This is because technological advancements have allowed astronomers to detect planets of smaller masses. So as the year gets bigger, the amount of planets discovered with small masses also increases.
+
+
+
+
+  3. Using the `planets` data set created at the beginning of the assignment
+*(not the reduced data set from the previous problem)*,
+determine which methods have been used to discover fewer than 30 planets each. For use in the remaining exoplanet problems,
+create a subset of the data by:
+
+- removing the planets discovered by those methods (with fewer than 30 exoplanet  discoveries)
+    - *(Hint: Consider creating a column which contains for each case the total number of times that the corresponding method appears in the data set and then using this information inside of `filter()`.)*
+    
+> Print a summary table with the methods used at least 30 times and the total number of exoplanets discovered by each, arranged from highest to lowest.
+
+- summarize *for each year*, the number of planets and the proportion of planets discovered by each method used 30 or more times. *(Note: filter to keep only methods that are used 30 or more times in the entire data set. Counts in a single year may be less.)*
+  - proportions should sum to one within each year.
+- arrange the rows by year in chronological order (earliest first)
+
+This data summary should have one row for each year and method (if the method was used in that year) and columns with the names `year`, `method`, `n`, and `proportion`.
+*(Hint: you may find it helpful also to create a `total` column with the total number of exoplanets discovered each year repeated for each row to help calculate the proportion.)*
+
+```{r}
+# step 1: filter out methods used < 30 times
+less_30 = planets %>% 
+  count(method) %>% 
+  filter(n < 30) %>% 
+  pull(method)
+
+# step 2: get rid of planets discovered by these methods
+filtered_planets = planets %>% 
+  filter(!(method %in% less_30)) # draw a comparison 
+
+# step 3: summary df
+summary = filtered_planets %>% 
+  count(method) %>% 
+  arrange(-n)
+
+summary
+
+# step 4: yearly summary w number and proportion of planets discovered by each method
+yearly_summary = filtered_planets %>% 
+  count(year, method) %>% 
+  group_by(year) %>% 
+  mutate(total = sum(n),
+         proportion = n / total) %>% 
+  ungroup() %>% 
+  select(year, method, n, proportion) %>% 
+  arrange(year)
+
+yearly_summary
+```
+
+Print the first 10 rows and all columns of this data summary.
+
+```{r}
+head(yearly_summary, 10)
+```
+
+
+
+
+
+  4. Using the data summary from the previous problem, create and display a bar plot with the year on the x axis and the proportion of discovered planets on the y axis.  Let each year have a single bar that extends from a proportion of 0 to 1, with sections of each bar filled with a color by method
+Add appropriate axis labels and plot title.
+
+```{r}
+yearly_summary %>% 
+  ggplot(aes(x = year, y = proportion, fill = method)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(
+    title = "Proportion of Exoplanets Discovered by Method Over Years",
+    x = "Year",
+    y = "Proportion"
+  )
+```
+
+
+Which method was most successful with the earliest discoveries of exoplanets, and which method has supplanted that method in relative popularity in recent years?
+
+> Radial Velocity was undoubtedly the most successful early on; in fact, between 1995 and 2002, it was the sole method employed. In recent years, Transit has been the most popular, being used in 50-75% of instances.
+
+
+
+
+
+
+
+  5. Begin with the data summary from the previous problem.
+
+- filter to only include years from 2010 -- 2022 (include the endpoints of the range), and
+- remove the rows corresponding to the "Transit" or "Radial Velocity" methods.
+
+Using this modified data set, create a plot which:
+
+- displays the *counts* of exoplanets discovered by method with a bar graph with year on the x axis, different fill colors for each method,
+and the *counts* of the number of planets for each year and method on the y axis using the function `geom_col()`.
+- does not stack the bars for each year, but rather display them next to each other in a clump by each year label.
+(*Note: The default is to stack bars. Use the argument `position = position_dodge2(preserve = "single")` inside of `geom_col()` to avoid stacking and to preserve the same bar width when the number of methods present changes by year.*)
+- adjusts the x-axis so a tick mark and label appears for each year (i.e., 2010, 2011, ..., 2022).  **(Hint: consider `scale_x_continuous()`.)**
+- uses appropriate axis labels and plot title.
+
+```{r}
+# Filter
+filtered = yearly_summary %>% 
+  filter(year >= 210 & year <= 2022 & !(method %in% c("Transit", "Radial Velocity")))
+
+# Plotting
+ggplot(filtered, aes(year, n, fill = method)) +
+  geom_col(position = position_dodge2(preserve = "single")) +
+  scale_x_continuous(breaks = 2010:2022) +
+  labs(
+    title = "Exoplanets Discovered by Method (2010-2022)",
+    x = "Year",
+    y = "Number of Planets"
+  )
+```
+
+
+
+
+
+```{r, include = FALSE}
+official = read_csv("../../data/madison-weather-official-1869-2022.csv")
+```
+
+  6. Use the official Madison weather data. Find:
+
+- **6a**. The dates with the five highest recorded maximum temperatures (there could be more than five dates due to ties)
+
+```{r}
+# to account for ties, let's check the fifth highest temp first
+fifth_highest_temp = unique(official$tmax) %>% 
+  sort(decreasing = TRUE) %>% 
+  .[5]
+
+top_temps = official %>%
+  filter(tmax >= fifth_highest_temp) %>%
+  arrange(desc(tmax), date)
+
+top_temps # we store the five highest temps and all dates associated with them
+```
+
+
+
+- **6b**. The proportion of all days by month with positive precipitation.
+
+```{r}
+# find proportion of days with precip (rainy / total)
+proportion_precip = official %>%
+  mutate(month = month(date, label = TRUE)) %>%
+  group_by(month) %>%
+  summarise(
+    total_days = n(),
+    days_with_precip = sum(prcp > 0, na.rm = TRUE),
+    proportion = days_with_precip / total_days
+  ) %>%
+  ungroup()
+
+proportion_precip
+```
+
+
+
+- **6c**. The average temperature (mean of `tavg`) by month for the years from 1991-2020. Consider these values to be the current *normal mean temperatures*. Then, find the average temperature by month in 2022. In how many months was the average temperature in 2022 higher than the normal mean temperature?
+
+```{r}
+# normal mean temps
+normal_temps = official %>%
+  filter(year(date) >= 1991 & year(date) <= 2020) %>%
+  mutate(month = month(date)) %>%
+  group_by(month) %>%
+  summarise(normal_mean_temp = mean(tavg, na.rm = TRUE)) %>%
+  ungroup()
+
+# average temp by month for 2022
+avg_temp_2022 = official %>%
+  filter(year(date) == 2022) %>%
+  mutate(month = month(date)) %>%
+  group_by(month) %>%
+  summarise(avg_temp_2022 = mean(tavg, na.rm = TRUE)) %>%
+  ungroup()
+
+# calculate number of months where 2022 temperature exceeded the normal mean
+comparison = inner_join(normal_temps, avg_temp_2022, by = "month") %>%
+  mutate(is_higher = avg_temp_2022 > normal_mean_temp)
+
+num_higher = sum(comparison$is_higher)
+
+num_higher
+```
+
+> 7
+
+
+
+
+- **6d**. The ten years with the highest average temperature on record since 1869. How many of these years have occurred since 2000?
+
+```{r}
+# calculate avg temp for each year
+avg_yearly = official %>%
+  group_by(year = year(date)) %>%
+  summarise(avg_temp = mean(tavg, na.rm = TRUE)) %>% # new column 
+  ungroup() %>%
+  arrange(desc(avg_temp)) %>%
+  slice(1:10) # take 10
+
+avg_yearly
+
+num_years = sum(avg_yearly$year >= 2000)
+
+num_years
+```
+
+> 3
+
+
+  7. The combined total monthly precipitation in Madison earlier this year (2023) was 0.95 inches in May and 1.14 inches in June.
+
+- Calculate the total monthly precipitation for each May and for each June by year from the official daily Madison weather data from 1869--2022.
+The resulting data set should have two rows for each of the years and columns for year, month, and total precipitation.
+- Create a single summary data table with the 25 lowest precipitation months for May, from the years 1869--2022, ranked from smallest to largest. Add a leading column named `rank` with the values from 1 to 25 (make reasonable modifications if there are ties).
+    - This summary table should have columns `rank`, `year`, `month`, and the total precipiation in inches.
+    In what rank would May 2023 fall among the driest Mays in recorded Madison history?
+- Repeat the previous calculations and summaries for June.    
+  
+  
+```{r}
+# total monthly precipitation for May and June by year
+monthly_precip = official %>%
+  filter(month(date) %in% c(5, 6)) %>%
+  group_by(year = year(date), month = month(date, label = TRUE)) %>%
+  summarise(total_precip = sum(prcp, na.rm = TRUE)) %>%
+  ungroup()
+
+# May
+may_summary = monthly_precip %>%
+  filter(month == "May") %>%
+  arrange(total_precip) %>%
+  slice(1:25) %>%
+  mutate(rank = row_number())
+
+# add May 2023 data
+may_2023_rank = tibble(year = 2023, month = "May", total_precip = 0.95)
+may_summary = bind_rows(may_summary, may_2023_rank) %>%
+  arrange(total_precip) %>%
+  mutate(rank = row_number()) %>%
+  slice(1:25)
+
+may_summary
+
+# identify rank for May 2023
+may_2023_position = filter(may_summary, year == 2023)$rank
+print(paste("May 2023 rank:", may_2023_position))
+
+# June
+june_summary = monthly_precip %>%
+  filter(month == "Jun") %>%
+  arrange(total_precip) %>%
+  slice(1:25) %>%
+  mutate(rank = row_number())
+
+# add June 2023 data
+june_2023_rank = tibble(year = 2023, month = "Jun", total_precip = 1.14)
+june_summary = bind_rows(june_summary, june_2023_rank) %>%
+  arrange(total_precip) %>%
+  mutate(rank = row_number()) %>%
+  slice(1:25)
+
+
+june_summary
+
+# identify rank for June 2023
+june_2023_position = filter(june_summary, year == 2023)$rank
+print(paste("June 2023 rank:", june_2023_position))
+```
+
+> May 2023 rank: 7, June 2023 rank: 6
+  
+  8. Return to the monthly total precipitation table for the months of May and June from 1869--2022. Create a new summary table by adding these totals for May and June within each year.
+
+- This summary table should have a column for `year` and a column for the combined total precipitation in May and June.
+
+- Make a plot which shows the combined total precipitation in May and June in Madison from 1869--2022 versus the year. Add a smooth trend curve to the plot. Add a red dashed horizontal line at the combined total precipitation in May and June for 2023. Include meaningful axis labels and a title for the plot.
+- Comment on how the combined precipitation in these two months in 2023 compares to the historical weather record.
+  
+```{r}
+# Combine
+combined_precip_table = monthly_precip %>% 
+  filter(month %in% c("May", "June")) %>%
+  group_by(year) %>%
+  summarise(precip_MayJune = sum(total_precip, na.rm = TRUE)) %>%
+  ungroup()
+
+combined_precip_table
+
+combined_2023 = 0.95 + 1.14  # combined total monthly precipitation in Madison earlier this year (2023) was 0.95 inches in May and 1.14 inches in June.
+
+ggplot(combined_precip_table, aes(x = year, y = precip_MayJune)) + 
+  geom_point() +  # individual points for each year
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +  # add a smoothed trend curve
+  geom_hline(yintercept = combined_2023, color = "red", linetype = "dashed") +  # 2023 value
+  labs(
+    title = "Combined Total Precipitation in May and June: Madison (1869-2022)",
+    x = "Year",
+    y = "Total Precipitation (inches)"
+  )
+```
+
+> In 2023, the combined precipitation in May and June for Madison is significantly below the historical average for these months.
+
+
+
