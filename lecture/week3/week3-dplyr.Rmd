@@ -458,6 +458,7 @@ mendota = mendota_interval %>%
             last_thaw = max(open)) %>% 
      mutate(decade = floor(year1 / 10) * 10) %>% 
     select(winter, year1, year2, decade, everything())
+mendota
 ```
     
 ## Madison Weather Overview
