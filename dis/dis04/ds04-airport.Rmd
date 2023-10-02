@@ -14,7 +14,7 @@ source("../../scripts/viridis.R")
 
 ## Members Present
 
-**Nico Salm**, Naman Sogani, Jeremy Emch, Dheeraj Pasikanti
+Nico Salm, Naman Sogani, Jeremy Emch, Dheeraj Pasikanti
 
 ## Members Absent
 
@@ -49,31 +49,16 @@ Complete the chunk below to do the following:
 ```{r}
 atlanta_data = read_tsv('../../data/atlanta-2018.tsv') %>%
   select(airport, date, all_total, all_flights) %>%
-  mutate(date = dmy(date), # dmy formatted datetimes
+  mutate(date = mdy(date), # mdy formatted datetimes
          passengers = all_total,
          flights = all_flights) %>%
-  select(-all_total, -all_flights)
-
-chicago_data = read_csv2('../../data/chicago-2018.csv') %>% # we want CSV2 because European formatting
-  select(airport, date, all_total, all_flights) %>%
-  mutate(date = dmy(date), # dmy format datetimes
-         passengers = all_total,
-         flights = all_flights) %>%
-  select(-all_total, -all_flights)
-
-# Combine data so we can perform less total separate computations 
-all_data = bind_rows(atlanta_data, chicago_data)
-
-# Compute totals and add w-day and month
-final_data = all_data %>%
-  group_by(airport, date) %>%
+  select(-all_total, -all_flights) %>%
+  group_by(airport, date) %>%  # Group by airport and date
   summarise(passengers = sum(passengers),
-            flights = sum(flights)) %>%
-  ungroup() %>%
+            flights = sum(flights), .groups = 'drop') %>%
   mutate(wday = wday(date, label = TRUE),
          month = month(date, label = TRUE)) %>%
   arrange(date)
-
 ```
 
 
@@ -90,41 +75,40 @@ Now, do the following:
 *Note:  You should have two summary data frames print, each arranged in a different order according to the directions above.*
 
 ```{r}
-# Break up final_data and grab jut ATL 
-atl_data = final_data %>%
-  filter(airport == "ATL") %>% # Atlanta flights
-  filter(!is.na(wday)) # handle NA rows, unclear whether we should keep these or not? 
-
-# Insights by day of the week
-atl_sum = atl_data %>%
+# Create summary by day of the week
+atl_sum = atlanta_data %>%
   group_by(wday) %>%
-  summarise(average_flights = mean(flights, na.rm = TRUE),
-            average_passengers = mean(passengers, na.rm = TRUE))
+  summarise(
+    avg_flights = mean(flights, na.rm = TRUE),
+    avg_passengers = mean(passengers, na.rm = TRUE)
+  )
 
-# Summary by days of the week
-atl_sum_ordered_by_day = atl_sum %>%
+# Print summary arranged by days of the week
+atl_sum_by_day = atl_sum %>%
   arrange(match(wday, c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")))
-print(atl_sum_ordered_by_day)
 
-# Summary by number of international flight arrivals 
-atl_sum_ordered_by_flights = atl_sum %>%
-  arrange(desc(average_flights))
-print(atl_sum_ordered_by_flights)
+print(atl_sum_by_day)
+
+# Print summary arranged by most to least average number of international flight arrivals
+atl_sum_by_avg_flights = atl_sum %>%
+  arrange(desc(avg_flights))
+
+print(atl_sum_by_avg_flights)
 ```
 
 
 
 ### 3
 
-> On what single date in April of 2018 did the largest number of international passengers arrive at the Atlanta airport? How many passengers were there? What day of the week was this date? Sunday, 21758 passengers. 
+> On what single date in April of 2018 did the largest number of international passengers arrive at the Atlanta airport? How many passengers were there? What day of the week was this date? Saturday, 18481 passengers. 
 
 ```{r}
-final_data %>%
-  filter(airport == "ATL" & 
-         month(date) == 4 & 
-         year(date) == 2018) %>%
+max_passengers_date = atlanta_data %>%
+  filter(month(date) == 4) %>%
   arrange(desc(passengers)) %>%
-  slice(1)  # Select the topmost row
+  slice(1)
+
+print(max_passengers_date)
 ```
 
 
@@ -139,13 +123,22 @@ final_data %>%
 chicago_data_hourly = read_csv2('../../data/chicago-2018.csv')
 
 chicago_data_daily = chicago_data_hourly %>%
-  mutate(date = dmy(date),  # Parse the date
-         hour_start = as.numeric(substr(hour, 1, 2)), # Extract the start hour
-         datetime = date + hours(hour_start)) %>%  # Combine date with hour to get a datetime column
-  group_by(airport, date) %>%
-  summarise(passengers = sum(all_total, na.rm = TRUE),
-            flights = sum(all_flights, na.rm = TRUE)) %>%
-  ungroup()
+  mutate(date = dmy(date)) %>%  # Parse the date
+  filter(!is.na(date)) %>%      # Remove rows with NA dates
+  group_by(airport, date, wday(date, label = TRUE)) %>%  # Group by airport, date, and weekday
+  summarise(passengers = sum(all_total, na.rm = TRUE), .groups = 'drop')
+
+# Calculate mean passengers by day of the week
+chicago_data_mean = chicago_data_daily %>%
+  group_by(wday(date, label = TRUE)) %>%
+  summarise(mean_passengers = mean(passengers), .groups = 'drop')
+
+# Plotting the data
+ggplot(chicago_data_mean, aes(x = `wday(date, label = TRUE)`, y = mean_passengers)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Mean Passengers Arriving at ORD by Day",
+       x = "Day of the Week",
+       y = "Mean Number of Passengers")
 ```
 
 
@@ -155,17 +148,19 @@ chicago_data_daily = chicago_data_hourly %>%
 > Using the Chicago data, make a line plot that shows the total number of international flights arriving to the airport by month. (Note: add `group = 1` as an aesthetic so that there is a single line for all months.)
 
 ```{r}
-monthly_flights = chicago_data_daily %>%
+chicago_data_monthly = chicago_data_hourly %>%
+  mutate(date = dmy(date),     # Parse the date
+         month = month(date, label = TRUE)) %>%  # Extract month
   filter(!is.na(date)) %>%
-  group_by(month = month(date, label = TRUE)) %>%
-  summarise(total_flights = sum(flights)) %>%
-  arrange(month)
+  group_by(airport, month) %>%
+  summarise(total_flights = sum(all_flights, na.rm = TRUE), .groups = 'drop')
 
-ggplot(monthly_flights, aes(month, total_flights, group = 1)) +
-  geom_line() +
-  labs(title = "Total Number of International Flights Arriving in Chicago by Month",
+# 2. Plotting the data
+ggplot(chicago_data_monthly, aes(x = month, y = total_flights, group = 1)) +
+  geom_line(color = "blue") +
+  labs(title = "Total Number of International Flights Arriving by Month at O'Hare International Airport",
        x = "Month",
-       y = "Total Flights")
+       y = "Total Number of Flights")
 ```
 
 ¬
