@@ -1,0 +1,317 @@
+---
+author: "Nico Salm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      error = TRUE, fig.height = 3)
+library(tidyverse)
+library(lubridate)
+source("../../scripts/viridis.R")
+```
+
+## Homework Assignment 4
+
+#### Due Friday, October 6 at 11:59 PM CT
+
+### Preliminaries
+
+- Directories
+    - COURSE/homework/
+    - COURSE/homework/hw04/
+    - COURSE/data/
+    - COURSE/scripts/
+- Files
+  - COURSE/homework/hw04/hw04.Rmd
+  - COURSE/data/ORD-2017.csv  
+  - COURSE/data/ORD-2018.csv  
+  - COURSE/data/ORD-2019.csv  
+  - COURSE/data/ORD-2020.csv  
+  - COURSE/data/ORD-2021.csv 
+  - COURSE/scripts/viridis.R
+
+### Aims
+
+- Practice data visualization using ggplot2  
+- Practice data wrangling with dplyr   
+- Practice reading in data and working with dates  
+- Explore additional airport waiting time data
+
+
+
+### Problems
+
+This assignment involves five data sets involving international flights arriving to Chicago's O'Hare airport from January 1, 2017 through December 31, 2021
+with one separate file for each year.
+Each file has been cleaned from the original HTML.
+
+Each data set is in a separate CSV file:
+`ORD-2017.csv`, `ORD-2018.csv`, `ORD-2019.csv`, `ORD-2020.csv`, `ORD-2021.csv`.
+
+This code chunk reads in these five data sets and combines them into a single data set.
+
+```{r}
+ord = map_dfr(2017:2021, ~{
+  return ( read_csv(str_c("../../data/ORD-", .x, ".csv")) )
+})
+colnames(ord)
+```
+
+  1. Make the following changes to the data set `ord`.
+
+- Add columns for:
+  - *year*;
+  - *month* (character valued, use month abbreviations, Jan - Dec);
+  - *day* (day of the month); and
+  - *wday* (day of the week, character valued, use day abbreviations, Sun - Sat).  
+- Reorder the variables so that these new variables all appear directly after the date column.  
+- Remove the `terminal` variable.  
+- Rename:
+  - *all_total* to *passengers*;
+  - *all_flights* to *flights*; and
+  - *all_booths* to *booths*.  
+- Arrange the rows by date and hour.  
+- Print all columns of the first 5 rows of this modified data frame
+- Print the dimensions of this modified data frame
+
+```{r}
+ord_modified = ord %>% 
+  # add new columns
+  mutate(year = year(date),
+         month = month(date, label = TRUE, abbr = TRUE),
+         day = day(date),
+         wday = wday(date, label = TRUE, abbr = TRUE)) %>% 
+  # reorder columns & remove 'terminal'
+  select(airport, date, year, month, day, wday, everything()) %>% 
+  select(-terminal) %>% 
+  # rename columns
+  rename(
+    passengers = all_total,
+    flights = all_flights,
+    booths = all_booths
+  ) %>% 
+  # arrange by date and hour
+  arrange(date, hour)
+
+head(ord_modified, n = 5)
+dim(ord_modified)
+```
+
+
+
+
+  2. Are there any dates in the range from January 1, 2017 through December 31, 2021 that are missing? If so, which ones?
+
+```{r}
+# I am going to approach this problem by creating a sequence of all dates from Jan 1, 2017 - December 31, 2021 and use the set difference operation
+
+# sequence of all days
+all_dates = seq(as.Date("2017-01-01"), as.Date("2021-12-31"), by="day")
+# extract all dates in the df
+ord_dates = unique(ord_modified$date)
+# set difference
+missing_dates = setdiff(all_dates, ord_dates)
+print(as.Date(missing_dates))
+```
+
+Missing: "2018-05-08" "2019-10-28" "2019-10-29" "2019-10-30" "2020-02-08"
+
+
+
+
+
+  3. Modify the `ord` data set by:
+
+- Adding a variable named `time_of_day` which categorizes the `hour` variable in the following way:
+
+  - midnight to 4am ("0000 - 0100" through "0300 - 0400") is "overnight"
+  - 4am to 8am is "early morning"
+  - 8am to noon is "morning"
+  - noon to 4pm is "afternoon"
+  - 4pm to 8pm is "early evening"
+  - 8pm to midnight is "late evening"
+  
+- After adding the `time_of_day` variable, this chunk of code will reorder the levels to match the times and not alphabetically.
+  - This is useful so you get the desired order in summary tables and plots.
+  - The function `fct_relevel()` is part of the **forcats** package in **tidyverse** which we will not study in depth.
+  - Use this code (or something like it) in your solution.
+  
+
+```{r}
+# Add 'time_of_day' variable using case_when
+ord_modified = ord_modified %>%
+  mutate(
+    start_hour = hour(hms(paste0(substr(hour, 1, 2), ":00:00"))),  # Extract starting hour using lubridate
+    time_of_day = case_when(
+      start_hour < 4  ~ "overnight",
+      start_hour < 8  ~ "early morning",
+      start_hour < 12 ~ "morning",
+      start_hour < 16 ~ "afternoon",
+      start_hour < 20 ~ "early evening",
+      TRUE            ~ "late evening"
+    )
+  ) %>%
+  select(-start_hour)  # remove the temporary start_hour column
+
+ord_modified = ord_modified %>% 
+  mutate(time_of_day = 
+           fct_relevel(time_of_day,
+                       c("overnight", "early morning", "morning", "afternoon", "early evening", "late evening")))
+```
+
+- Create a summary table which counts the number of rows for each `time_of_day` and `hour` combination. Verify that the top ten rows of your data set match these values.
+
+```
+   time_of_day   hour            n
+   <fct>         <chr>       <int>
+ 1 overnight     0000 - 0100  1345
+ 2 overnight     0100 - 0200   538
+ 3 overnight     0200 - 0300   167
+ 4 overnight     0300 - 0400   125
+ 5 early morning 0400 - 0500   520
+ 6 early morning 0500 - 0600  1024
+ 7 early morning 0600 - 0700  1355
+ 8 early morning 0700 - 0800  1286
+ 9 morning       0800 - 0900  1434
+10 morning       0900 - 1000  1447
+```
+
+```{r}
+summary_table = ord_modified %>%
+  group_by(time_of_day, hour) %>%
+  summarise(row_count = n()) %>%
+  arrange(time_of_day, hour)
+
+head(summary_table, 10) # valid
+```
+
+- Create an additional summary table which calculates the total number of flights which arrive during each of these time periods. This table will have six rows.
+
+- Print the table.
+
+```{r}
+flights_summary = ord_modified %>%
+  group_by(time_of_day) %>%
+  summarise(total_flights = sum(flights, na.rm = TRUE))
+
+flights_summary
+```
+
+
+
+
+  4. Use a bar graph to display the total number of flights in each time period as calculated in the previous problem. There should be six categories of time period from "overnight" to "late evening".
+Add a title and meaningful axis labels.  
+
+```{r}
+ggplot(flights_summary, aes(x = time_of_day, y = total_flights)) +
+  geom_bar(stat = "identity", fill = "darkblue") +
+  labs(
+    title = "Total Number of Flights for Each Time of Day",
+    x = "Time of Day",
+    y = "Total Flights"
+  )
+```
+
+
+
+
+
+  5. Create a data summary table with the average daily number of passengers by month and year.
+  
+- Display this data summary with a bar chart where month is on the x-axis and average daily passenger counts are on the y axis 
+- Add meaningful axis labels and a title to this graph.  
+- Change the y axis scale labels so values are regular numbers with commas. *(Use `scale_y_continuous()` as below)*
+- Display the graph with a different facet for each year
+
+
+
+```{r, fig.height = 6}
+# data summary table
+daily_summary = ord_modified %>%
+  group_by(year, month) %>%
+  summarise(total_passengers = sum(passengers, na.rm = TRUE), 
+            days = n_distinct(date)) %>%
+  mutate(average_daily_passengers = total_passengers / days)
+
+# plotting
+p = ggplot(daily_summary, aes(x = month, y = average_daily_passengers, fill = month)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Average Daily Number of Passengers by Month and Year",
+    x = "Month",
+    y = "Average Daily Passengers"
+  ) +
+  scale_y_continuous(labels = scales::comma) + # Display y-axis values with commas
+  facet_wrap(~year, ncol = 1) + # Separate facet for each year!
+  theme(legend.position = "none") # remove the legend since it's redundant
+
+p
+```
+
+
+
+
+  6. What striking feature is apparent in this graph?
+What explains this feature of the data?
+
+> Notice the seasonality in the data correlated to when individuals in the US take their vacations. More importantly, we can see sparse travel beginning in March-April 2020, the same time period when the COVID-19 pandemic was recognized. This unnatural lull continues for the remainder of 2020 and 2021, as the pandemic was very much in full force at that time.
+
+
+
+  7. Investigate the average number of passengers per day of the week for the years 2017--2019.
+
+- For each day of the week (Sunday -- Saturday), calculate the average number of arriving daily passengers to ORD on international flights. Display this table sorted from highest to lowest average.
+*(Hint: you need to total passengers by date and day of week before taking averages.)*
+- Print the entire table
+
+```{r}
+# years 2017-2019
+filtered_data = ord_modified %>%
+  filter(year %in% c(2017, 2018, 2019))
+
+# group by date and wday to get total passengers per day
+daily_totals = filtered_data %>%
+  group_by(date, wday) %>%
+  summarise(daily_passengers = sum(passengers, na.rm = TRUE))
+
+# group by wday to get average daily passengers
+avg_daily_by_wday = daily_totals %>%
+  group_by(wday) %>%
+  summarise(avg_passengers = mean(daily_passengers, na.rm = TRUE)) %>%
+  arrange(-avg_passengers)  # sort
+
+avg_daily_by_wday
+```
+
+
+
+
+
+  8. Identify the 20 dates with the highest total number of arriving passengers.
+How many of these dates fall on the day of the week identified in the previous problem as the that with the highest average?
+
+```{r}
+# 1. top 20 dates
+top_dates = ord_modified %>%
+  group_by(date) %>%
+  summarise(total_passengers = sum(passengers, na.rm = TRUE)) %>%
+  arrange(-total_passengers) %>%
+  head(20)
+
+# 2. join these top dates with the original dataset to get the days of the week for each date
+top_dates_with_day = top_dates %>%
+  left_join(select(ord_modified, date, wday), by = "date") %>%
+  distinct(date, .keep_all = TRUE)
+
+# 3. identify highest day
+highest_avg_day = avg_daily_by_wday$wday[1] 
+
+# 4. check how many 
+number_on_highest_avg_day = sum(top_dates_with_day$wday == highest_avg_day)
+
+number_on_highest_avg_day
+```
+
+19, one Thursday had the highest number of passengers ever which was interesting. 
