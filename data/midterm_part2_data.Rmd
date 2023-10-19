@@ -1,0 +1,105 @@
+---
+title: "STAT240 Midterm - Part 2 Data Description"
+output: html_document
+---
+
+<style>#header{margin-bottom:30px}div.level2{margin:40px 0 80px}div.level3{margin:40px 0 60px}h3{margin-bottom:20px}</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE,error=TRUE,
+                      fig.width=6,fig.height=6,fig.align='center')
+library(tidyverse)
+library(lubridate)
+
+# force more digits to be printed
+options(pillar.sigfig=7,width=100)
+```
+
+
+**Important notes:**
+
+ - There are 2 questions with 3 parts each, each part is 8 points, and there are 2 additional points for uploading and submitting a properly written up and knitted HTML file (along with the Rmd source file) to canvas through the exam page. That makes a total of 6*8+2=50 points for this take home exam.
+ - Remember you can use any and all notes, files, videos, and cheat sheets presented in class or found on Canvas (for the tidyverse cheat sheets, you may find them using the internet). You may also reference R documentation manuals for any function. However, you may NOT search for other help online or discuss exam materials with anyone.
+ - **All plots MUST include proper titles, labels**, etc. for full credit!
+ - Please **KNIT as you go along and CHECK YOUR OUTPUT to ensure there are no errors**! We have added `error=TRUE` as a default argument in the setup chunk above (line 10 in the Rmd) which will allow the document to knit even if there are errors (so that you can still submit an HTML file in the end for us to grade). Files with errors in the knitted output may be penalized!
+ - Also make sure you do NOT delete the blank lines around section headers (e.g. the ## Question x and ### Part x lines). Deleting the extra lines may cause R to knit document sections incorrectly, and we use these sections to help navigate through your exams. If they are messed up, it could make it more likely for us to accidentally miscalculate your score.
+ - ***If you have ANY questions, please email the instructor and also CC all TAs in your section!*** and we will try to answer them as quickly as we can.
+
+
+
+
+
+## Question 1 <small>(8pts each part, 24 pts total)<small/>
+
+
+The following chunk imports in a dataset of historical meteorological observations taken from a buoy stationed in the middle of lake Michigan between 1981 and 2022 (courtesy of NOAA).
+
+```{r}
+# check if data file already exists in current working directory, if not, download the file
+if(!file.exists("michigan.csv")){
+  download.file("https://pages.stat.wisc.edu/~bwu62/michigan.csv",destfile="michigan.csv")
+}
+
+michigan = read_csv("michigan.csv")
+
+print(michigan)
+```
+
+Below is a brief description of SOME of the columns, focusing on the ones we may be interested in using later.
+
+ - `YYYY`,`MM`,`DD`: The year, month, and day of each observation. Note there's also an hour column `hh` that we won't be using (there are usually multiple observations in each day, several hours apart).
+ - `WSPD`: Wind speed in m/s averaged over an 8-minute period
+ - `GST`: Peak wind gust speed over a few seconds in the 8-minute period
+ - `PRES`: Sea level pressure in hPa
+ - `ATMP`,`WTMP`: Air and water surface temperatures in °C
+
+
+
+## Question 2 <small>(8pts each part, 24 pts total)</small>
+
+
+The following chunk imports in a large database of historical chess games between 1900 and 1980 (courtesy of Caissabase), including information about the event, players, results, and game moves. We will do some very basic exploratory analysis to look at statistics of different starting moves. No knowledge of chess will be required for this exercise.
+
+```{r}
+###
+### BEFORE RUNNING THIS CHUNK, MAKE SURE TO SET YOUR WORKING DIRECTORY!
+###
+
+# check if data file already exists in current working directory, if not, download the file
+if(!file.exists("games.csv")){
+  download.file("https://pages.stat.wisc.edu/~bwu62/games.csv",destfile="games.csv")
+}
+
+# read downloaded data file
+games = read_csv("games.csv")
+
+print(games)
+```
+
+Description of all the columns:
+
+ - `Event`: name of the event the game was played in. Only games played before 1980 are in this dataset.
+ - `Site`: location of the event
+ - `Date`: partial date information (NOTE: most of the rows ONLY have the year recorded with no month or day)
+ - `Round`: which round of the event this game was played in
+ - `White`/`Black`: names of the players
+ - `Result`: final result of the game (NOTE: 1-0 means white won, 0-1 means black won, and 1/2-1/2 means the game was drawn (i.e. the players tied))
+ - `Moves`: the moves of the game
+
+Additionally, a little bit of the preprocessing has already been done for you in the chunk below:
+
+```{r}
+games = games %>% mutate(
+  first_moves = str_replace(str_replace(Moves," 2\\..*",""),"1\\. ",""),
+  first_white = str_extract(first_moves,"^[:alnum:]+"),
+  first_black = str_extract(first_moves,"[:alnum:]+$")
+) %>% select(-first_moves)
+
+print(games)
+```
+
+The above operation extracts the **first moves from each player**. The "Moves" column shows the move sequence for each turn, starting with white's first move and black's first move, then white's second move and black's second move, and so on. Each player's first moves have been extracted into 2 columns called `first_white` and `first_black`.
+
+ - For example, a move sequence starting with "1. Nf3 g6 2. d4 Bg7..." means white started the game with their first move "Nf3", then black played their first move "g6", then white played their second move "d4", then black played their second move "Bg7", and so on. This move notation is called algebraic chess notation.
+ - NOTE: you do NOT need to know what these moves refer to, we will just use the names to do some basic summarizing/visualizing down below.
+
