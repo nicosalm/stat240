@@ -1,0 +1,286 @@
+---
+title: "STAT 240 Discussion 7"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+library(tidyverse)
+source("../../scripts/viridis.R")
+source("../../scripts/ggprob.R")
+```
+
+
+## Group XXX (use the assigned group name/number)
+
+## Members Present
+
+**Nico Salm**, Dheeraj Pasikanti, Jinming Liu, Michelle Kim
+
+## Members Absent
+
+- ADD NAMES OF ANY ABSENT MEMBERS
+
+
+## Questions
+
+### 1
+
+For each scenario, explain why the random variable does *not* have a binomial distribution.
+
+1. A bucket contains 10 colored tokens with five that are red and five that are blue. Four tokens are drawn at random from the bucket one at a time, but without replacing the tokens drawn. $X_1$ is the number of red tokens selected.
+
+- The probabilities change with each draw, violating the requirement of a constant probability of success.
+- Trials are not independent since each draw affects the composition of the remaining tokens.
+
+2. A fair coin is tossed repeatedly until the tenth head is tossed. $X_2$ is the number of tails tossed prior to the tenth head.
+
+- There is no fixed number of trials which violates the binomial criterion of a set number of experiments.
+
+3. Four buckets each contain a total of five tokens each, some red and some blue. The number of red tokens in the buckets are 1, 2, 3, and 4 with blue tokens making up the remainder. One token is drawn at random from each bucket. $X_3$ is the total number of red tokens drawn.
+
+- The probability of success isn't constant but varies by the bucket, violating the binomal requirement of a consistent success probability across all trials.
+
+
+### 2
+
+Let $X \sim \operatorname{Binomial}(25,0.4)$.
+
+#### A
+
+Calculate and report the mean $\mu=\mathrm{E}(X)$ and the standad deviation $\sigma=\sqrt{\operatorname{Var}(X)}$
+
+```{r}
+Binomial <- function(n, p) {
+  if (n <= 0 | p < 0 | p > 1) {
+    stop("invalid input: n must be positive, and p must be between 0 and 1.")
+  }
+  
+  # calculate mean and variance
+  mean = n * p
+  var = n * p * (1 - p)
+  
+  # stdev
+  stdev = sqrt(var)
+  
+  results = c(mean = mean, variance = var, std_dev = stdev)
+}
+
+stats = Binomial(25,0.4)
+stats
+```
+
+mean = 10, std_dev = 2.45
+
+#### B
+
+Calculate $\text{P}(X \geq 14)$
+
+```{r}
+n = 25
+p = 0.4
+
+# pbinom gives probability X ≤ p
+# want: P(X ≥ 14), so calculate complement, 1 - P(X < 14)
+# this is the same as 1 - P(X ≤ 13) since binomial dist is discrete
+
+prob = 1 - pbinom(13, size = n, prob = p)
+
+print(prob)
+```
+
+7.8%
+
+#### C
+
+Create a graph of the $\operatorname{Binomial}(25,0.4)$ distribution. Color the segments for $x=14,15,...,25$ red and use gray for the rest. Plot using `theme_minimal()`.
+
+You may edit the code in this block which does something similar for a different problem. Note the use of `geom_binom_density()` with different values of `a` AND `b`.
+
+```{r}
+# parameters
+n <- 25
+p <- 0.4
+
+# Create a dataframe containing the outcomes and their probabilities
+data <- data.frame(x = 0:n)
+data$probability <- dbinom(data$x, size = n, prob = p)
+
+# Create the base plot
+p <- ggplot(data, aes(x = x, y = probability)) +
+  geom_bar(stat = "identity", aes(fill = (x >= 14)), width = 0.7) + 
+  scale_fill_manual(values = c("TRUE" = "red", "FALSE" = "gray")) +
+  labs(title = "Binomial Distribution", x = "Number of Successes", y = "Probability") +
+  theme_minimal()
+
+p
+```
+
+
+
+### 3
+
+Create a data frame with columns `n`, `p`, `x`, `mu`, and `prob` where:
+
+- `n` varies from 2 to 100 by twos (so each `n` value is even);
+- `p` equals 0.5;
+- `x` is $n/2$;
+- `mu` is the mean of the distribution;
+- `prob` is $P(X = x)$
+
+Show the first few rows using `head()`.
+
+```{r}
+df = tibble(n = seq(2, 100, by = 2)) %>% 
+  mutate(
+    p = 0.5,
+    x = n / 2,
+    mu = n * p,
+    prob = dbinom(x, n, p)
+  )
+head(df)
+```
+
+
+**(a)** What is the relationship between `x` and `mu`?
+
+x is defined as n/2 and mu (mean) is defined as nxp. Since p=0.5, both x and mu are equal
+
+**(b)** Make a line graph of `prob` versus `n`.
+
+```{r}
+p = ggplot(df, aes(x = n, y = prob)) +
+  geom_line(color = "maroon") +
+  labs(title = "Probability of X = Mean vs. n", x = "n", y = "Probability")
+p
+```
+
+**(c)** Describe the pattern: how does the probability that a random variable is equal to the mean (when the mean is a possible value) change as $n$ increases?
+
+- As 'n' increases, P(X) = mean generally decreases. As #trials increases, the distribution becomes wider, spreading the probability out over more potential outcomes, even though it also becomes more symmetric.
+
+
+### 4
+
+The central limit theorem implies that the binomial distribution converges to a normal distribution as $n$ increases.
+This problem will examine one aspect of the convergence, namely the right tail probability of being more than two standard deviations above the mean,
+$P(X > \mu + 2\sigma)$.
+
+**(a)** What is the probability that a normal random variable with mean $\mu$ and standard deviation $\sigma$ exceeds $\mu + 2 \sigma$? Display answer rounded to four decimal places.
+
+0.68 0.95 0.997
+
+```{r}
+prob = 1 - pnorm(2)
+round(prob, 4)
+```
+
+0.0228 or 2.28%
+
+**(b)** 
+
+Create a data frame with columns `n`, `p`, `mu`, `sigma`, `x`, and `prob` where:  
+- `n` varies from 1 to 1000 by ones;  
+- `p` equals 0.5;  
+- `mu` is the mean of the distribution;  
+- `sigma` is the standard deviation of the distribution;  
+- `x` equals `mu` + 2*`sigma`;  
+- `prob` is $P(X > x)$  
+
+Display the first few rows of the data frame with `head()`.
+
+```{r}
+df = tibble(n = 1:1000) %>% 
+  mutate(
+    p = 0.5,
+    mu = n * p,
+    sigma = sqrt(n * p * (1 - p)),
+    x = mu + 2 * sigma,
+    prob = pbinom(x, n, p, lower.tail = FALSE)
+  )
+head(df)
+```
+
+**(c)** Plot the right tail probabilities versus $n$. Add a red, dashed, horizontal line at the value you found in part **(a)**.
+Add a smooth curve which lessens the visual impact of the oscillations due to the discreteness of the binomial distribution.
+
+```{r}
+ggplot(df, aes(x = n, y = prob)) +
+  geom_line(color = "darkblue") +
+  geom_hline(yintercept = 0.0228, linetype = "dashed", color = "red") +
+  geom_smooth()
+```
+
+
+**(d)** Repeat parts **(b)** and **(c)** if $p = 0.005$.
+
+```{r}
+df = tibble(n = 1:1000) %>% 
+  mutate(
+    p = 0.005,
+    mu = n * p,
+    sigma = sqrt(n * p * (1 - p)),
+    x = mu + 2 * sigma,
+    prob = pbinom(x, n, p, lower.tail = FALSE)
+  )
+head(df)
+```
+
+```{r}
+ggplot(df, aes(x = n, y = prob)) +
+  geom_line(color = "darkblue") +
+  geom_hline(yintercept = 0.0228, linetype = "dashed", color = "red") +
+  geom_smooth()
+```
+
+**(e)**
+
+Ignoring the oscillations, how do the patterns of the two smooth curves in the graphs differ from one another, especially when $n$ is large?
+
+As we choose p further and further from 0.5 we see less accurate data as is it much more spread out.
+
+
+### 5
+
+Repeat problems 4B and 4C if $p=0.005$
+
+See above 4D.
+
+
+### 6
+
+Draw graphs of the binomial distributions for $n=500$ and $p = 0.5$ and $p = 0.005$,
+scaled so that the x axis is restricted to where the probabilities are relatively large.  (One graph for each of the two $p$'s.)
+Overlay each plot with a red normal density with a mean and standard deviation that matches the mean and standard deviation of the corresponding binomial distribution.
+(Use functions in *gprob.R* for these graphs and set `scale=TRUE`.)
+
+Compare the skewness of the distributions. Comment on how this might help explain the differences in the right tail probabilities from Problem 3.
+```{r}
+# Set parameters
+n <- 500
+p1 <- 0.5
+p2 <- 0.005
+
+# mean and standard deviation for the binomial distributions
+mean1 <- n * p1
+std_dev1 <- sqrt(n * p1 * (1 - p1))
+mean2 <- n * p2
+std_dev2 <- sqrt(n * p2 * (1 - p2))
+
+# generate plots
+binom_plot1 <- gbinom(n, p1, scale = TRUE)
+norm_overlay1 <- gnorm(mean1, std_dev1, color = "red")
+binom_plot1
+norm_overlay1
+
+# for the second plot with p = 0.005
+binom_plot2 <- gbinom(n, p2, scale = TRUE)
+norm_overlay2 <- gnorm(mean2, std_dev2, color = "red")
+binom_plot2
+norm_overlay2
+```
+
+NOTE: Since gbinom and gnorm return ggplot objects and not layers, we cannot layer them together.
+
+The binomial distribution with p=0.5 is symmetric, yielding balanced tails, while p=0.005 introduces positive skew, emphasizing a heavier right tail. This explains the higher probabilities of extreme values in the right tail for p=0.005, as observed in Problem 3.
+
