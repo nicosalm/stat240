@@ -1,5 +1,5 @@
 ---
-author: "YOUR NAME HERE"
+author: "Nico Salm"
 output: html_document
 ---
 
@@ -63,19 +63,34 @@ p1_tab %>%
 - Put the values `x = 0:8` and the tabled probabilities `p` into a data frame (use `tibble()`).
 
 ```{r}
+p1 = tibble(x = x,
+            p = c(p, rep(NA, 2)))
 
+total_prob = sum(p1$p, na.rm = TRUE)
+remaining_prob = 1 - total_prob
+missing_prob = remaining_prob / 2
+
+p1 = p1 %>%
+  replace_na(list(p = missing_prob)) # this indeed sums to 1
+p1
 ```
 
 - Write code to calculate the missing values for $\prob(X=7) = \prob(X = 8)$ and replace the missing values with these calculated values into your data frame.
 
 ```{r}
+sum_known_p = sum(p1$p, na.rm = TRUE)
+remaining_p = 1 - sum_known_p
+each_missing_p = remaining_p / 2
+p1 = p1 %>%
+  mutate(p = if_else(is.na(p), each_missing_p, p))
+p1
 
 ```
 
 - Verify that the sum of all probabilities is 1.
 
 ```{r}
-
+sum(p1$p) # checks out
 ```
 
 
@@ -86,7 +101,11 @@ For the probability distribution from the previous problem:
 - Calculate the mean, variance, and standard deviation.
 
 ```{r}
+mean_x = sum(p1$x * p1$p)
+var_x = sum((p1$x - mean_x)^2 * p1$p)
+sd_x = sqrt(var_x)
 
+c(mean_x, var_x, sd_x)
 ```
 
 
@@ -100,7 +119,31 @@ For the probability distribution from Problem 1:
   
   
 ```{r}
+# create basic scatter plot with line segments.
+p = ggplot(data = p1, aes(x = x, y = p)) + 
+  geom_point() +
+  geom_segment(aes(x = x, xend = x, y = 0, yend = p)) # adds line segments
 
+# add dashed red line for the mean.
+p = p + geom_hline(yintercept = mean_x, linetype = "dashed", color = "red", size = 1)
+
+# calculate positions for the standard deviation lines.
+sd1_up <- mean_x + sd_x
+sd1_down <- mean_x - sd_x
+sd2_up <- mean_x + (2 * sd_x)
+sd2_down <- mean_x - (2 * sd_x)
+
+# add dotted lines for standard deviations.
+p = p + geom_hline(yintercept = sd1_up, linetype = "dotted", color = "black", size = 1) +
+      geom_hline(yintercept = sd1_down, linetype = "dotted", color = "black", size = 1) +
+      geom_hline(yintercept = sd2_up, linetype = "dotted", color = "black", size = 1) +
+      geom_hline(yintercept = sd2_down, linetype = "dotted", color = "black", size = 1)
+
+p = p + labs(title = "Probability Distribution of X",
+              x = "Value of X",
+              y = "Probability")
+
+p
 ```
   
 
@@ -114,7 +157,11 @@ For the probability distribution from Problem 1:
 - Print the entire modified data frame.
 
 ```{r}
+p1_with_cdf = p1 %>%
+  arrange(x) %>% # ensure the data is sorted by 'x'.
+  mutate(cdf = cumsum(p))
 
+p1_with_cdf
 ```
 
 
@@ -131,7 +178,18 @@ Using the probability distribution from the previous problem:
     
     
 ```{r}
+extended_data <- p1_with_cdf %>%
+  add_row(x = -1, cdf = 0) %>%  # Adding the starting point
+  add_row(x = 9, cdf = 1) %>%  # Assuming the CDF is complete and reaches 1 at x = 9
+  arrange(x)
 
+ggplot(extended_data, aes(x = x, y = cdf)) +
+  geom_step(direction = 'hv') + # 'hv' makes the step first horizontal then vertical
+  labs(
+    title = "Cumulative Distribution Function (CDF)",
+    x = "x",
+    y = "F(x)"
+  )
 ```
 
 
@@ -141,11 +199,30 @@ The $p$ quantile of a probability distribution is any location $a$ where $\prob(
   
 - By examining the graph of the CDF in the previous problem, identify the 0.2, 0.3, 0.4, and 0.5 quantiles of the probability distribution of $X$. (You can do this without code, but a pat on the back if you can write code to find the values.)
 
-> Write answers here
+```{r}
+data <- tibble(X = runif(1000, 0, 8)) # generating random sample data
+
+# Calculate quantiles
+quantiles <- data %>%
+  summarize(
+    q0.2 = quantile(X, 0.2),
+    q0.3 = quantile(X, 0.3),
+    q0.4 = quantile(X, 0.4),
+    q0.5 = quantile(X, 0.5)
+  )
+
+print(quantiles)
+```
+
+> 0.2 -> 1.63
+> 0.3 -> 2.43
+> 0.4 -> 3.30
+> 0.5 -> 4.07
+> (Calculated over a random sample)
 
 - Explain why there are multiple values $a$ which are 0.1 quantiles of the distribution and specify all such values.
 
-> Write answer here
+> This occurs when the CDF has a flat plateau. Therefore, all x-values in the range [0.0, slightly below 2.5] are 0.1 quantiles of the distribution.
 
 
 
@@ -159,10 +236,10 @@ gbinom(5, 0.4)
   
 - Based on the graph, what value of $x$ does the median have? Compare to the value of `qbinom(0.5, 5, 0.4)`.
 
-> Write response
+> The median is 2 which is also the output of qbinom(0.5, 5, 0.4)
 
 ```{r}
-
+qbinom(0.5, 5, 0.4)
 ```
 
 
@@ -184,6 +261,6 @@ pnorm(60, 50, 10)
 
 - Is the 0.80 quantile of this distribution smaller than, equal to, or greater than 60? Briefly explain.
 
-> Write your response here.
+> Since pnorm = 0.84 > 0.8, it means more than 80% of the data falls to the left of 60, indicating the the 0.80 quartile is less than 60.
     
  
