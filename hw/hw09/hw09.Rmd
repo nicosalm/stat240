@@ -1,0 +1,203 @@
+---
+author: "YOUR NAME HERE"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE,
+                      warning = FALSE, error = TRUE, fig.height = 3)
+library(tidyverse)
+library(kableExtra)
+library(broman)
+source("../../scripts/viridis.R")
+source("../../scripts/ggprob.R")
+theme_set(theme_minimal())
+```
+
+\newcommand{\E}{\mathsf{E}}
+\newcommand{\Var}{\mathsf{Var}}
+\newcommand{\SD}{\mathsf{SD}}
+\renewcommand{\prob}{\mathsf{P}}
+
+## Assignment 9
+
+#### Due Friday, November 10, 11:59 PM CT
+
+### Preliminaries
+
+- Directories
+    - COURSE/homework/
+    - COURSE/homework/hw10/
+    - COURSE/data/
+    - COURSE/scripts/
+- Files
+  - COURSE/homework/hw10/hw10.Rmd
+  - COURSE/data/chimpanzees.csv
+  - COURSE/scripts/viridis.R
+  - COURSE/scripts/ggprob.R
+
+### Data
+
+- The data are in the file `chimpanzee.csv`.    
+- These data are artificial, but created to match details from a 2011 PNAS paper on chimpanzee prosocial choice.  
+- See the [Course Notes and Case Studies Chapter 18](https://bookdown.org/bret_larget/stat-240-case-studies/chimpanzees-and-prosocial-choice.html) for background on the data.
+
+### Aims
+
+- Practice the normal distribution and the central limit theorem
+- Practice inference on proportions
+
+## Problems
+
+#### 1
+Let $X \sim \text{Normal}(200, 40)$
+so $\mu = 200$ and $\sigma = 40$.
+
+- Find and display the values $x_1$ and $x_2$ such that:
+  - $x_1 < \mu < x_2$;
+  - $x_1$ and $x_2$ are equidistant from $\mu$ ($\mu - x_1 = x_2 - \mu$);
+  - The area under the density between $x_1$ and $x_2$ equals 0.8 ($\prob(x_1 < X < x_2) = 0.8$).
+- Create a graph showing the normal density with the area between $x_1$ and $x_2$ being shaded.
+
+```{r}
+
+```
+
+#### 2
+Heights in a population of American adult males are approximately normal with a mean of 70 inches and a standard deviation of 3 inches.
+  
+- What proportion of American adult males are taller than two meters tall? (One meter equals 39.37 inches.)
+- What is the 95th percentile of American adult male height?
+- If we took a random sample of 250 men, how likely is it that the sample mean of their heights would be between 69.5 and 70.5 inches?
+
+```{r}
+
+```
+
+#### 3
+Suppose you are playing a coin flipping game with a friend, where you suspect the coin your friend provided is not a fair coin.  In fact, you think the probability the coin lands heads is less than 0.5.  To test this, you flip the coin 100 times and observe the coin lands heads 35 times.
+  
+- If you assume the coin is fair (i.e., the probability of the coin landing heads is 0.5), what is the probability of observing 35 heads or fewer, calculated using an exact model?
+
+- Calculate the previous probability, but use a normal approximation to achieve a numerical value. What is the relative error in this approximation? (Relative error is the absolute difference divided by the exact value, times 100%.)
+
+- How small would $p$ need to be (rounded to the nearest 0.01) for the probability of observing 35 or fewer heads to be at least 0.05?
+
+```{r}
+
+```
+
+- Does it seem plausible that the coin is fair? Briefly explain.
+
+
+
+#### 4
+This problem uses the chimpanzee prosocial experiment data we have been using in lecture. For this problem, we will:
+  
+- Consider only those trials with a partner.
+- Make an assumption that there is a universal $p_{\text{partner}}$ representing the probability any chimpanzee would make a prosocial choice in a single trial under the experimental conditions we have been examining.  
+- Assume that all trials are independent.
+
+Do the following:
+
+- Read in the `chimpanzee.csv` data file.  
+- Create a summary table with:
+  - one row for all trials with a partner and one row for all trials without a partner;
+  - a column `prosocial` with the combined number of prosocial choices made (separate values for with and without a partner);
+  - a column `selfish` for the number of selfish choices made;
+  - a column `n` with the combined number of trials (values should be 610 and 180); 
+  - a column `p_prosocial` with the proportion of prosocial choices made.
+- Print the entire table
+
+```{r}
+
+```
+
+
+
+#### Solution
+
+
+
+
+
+
+#### 5
+Define $p_1 = p_{\text{partner}}$ and $p_2 = p_{\text{no partner}}$ to be the long-run probabilities that chimpanzees make the prosocial choices with and without a partner, respectively, in the experimental conditions. (*You can decide which subscripts to use*.) Note that these parameter definitions implicitly assume that all trials are independent and that the identities of the chimpanzees and their partners do not affect the prosocial trial probabilities. These assumptions could and should be examined, but complete these problems as if the assumptions are accurate.
+
+- Write a statistical model for the data, $X_1$ and $X_2$, the number of pro-social choices under the two conditions. (It may be helpful to copy and edit LaTeX syntax from the lecture notes if you want to make the knitted document look pretty, but plain text is also fine.)
+
+> [Replace with your answer]
+
+- Use the data summary in Problem 4 to construct a 95% confidence interval for  $p_{\text{partner}} - p_{\text{no partner}}$ (or $p_1 - p_2$), using the Agresti-Coffe method for confidence intervals for differences in proportions.
+
+```{r}
+
+```
+
+- Interpret this confidence interval in context, following model language in lecture notes.
+
+> [Replace with your answer]
+
+
+
+
+
+#### 6
+Using data and parameters definitions from previous problems, test the hypothesis that $p_1 = p_{\text{partner}} = 0.5$ versus the two-sided alternative.
+
+- State null and alternative hypotheses.
+- Write the statistical model for $X_1$, the number of pro-social choices.
+- State the sampling distribution of $X_1$ if the null hypothesis is true.
+- Which possible outcomes of $X_1$ have evidence against the null hypotheses at least as strong as the observed data, $x_1 = 359$?
+- Calculate and report a p-value.
+- Following style from lecture examples, write an interpretation of the results in context without statistical jargon, summarizing the statistical evidence to support your conclusions in a short phrase within a pair of parentheses.
+
+> [hypotheses]
+
+> [model]
+
+> [sampling distribution]
+
+> [outcomes]
+
+> [p-value]
+
+```{r}
+
+```
+
+> [conclusion]
+
+
+
+#### 7
+Repeat Problem 6, but use the data for all trials **without a partner** for an assumed universal parameter $p_2 = p_{\text{no partner}}$, using a statistical model for $X_2$, the total number of prosocial choices made without a partner present in the experiment.
+
+> [hypotheses]
+
+> [model]
+
+> [sampling distribution]
+
+> [outcomes]
+
+> [p-value]
+
+```{r}
+
+```
+
+> [conclusion]
+
+
+
+
+
+
+#### 8
+The previous statistical inferences assume a binomial model for the observed number of prosocial choices for trials with and without a partner.
+
+State one criticism where reality may differ from the assumptions, possibly leading to misleading conclusions.
+(What is an example of an assumption of the binomial model which, in the given context, is questionable?)
+

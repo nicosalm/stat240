@@ -1,0 +1,130 @@
+---
+title: "STAT 240 Discussion 9"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+library(tidyverse)
+source("../../scripts/viridis.R")
+source("../../scripts/ggprob.R")
+```
+
+\newcommand{\E}{\mathsf{E}}
+\newcommand{\Var}{\mathsf{Var}}
+\renewcommand{\prob}{\mathsf{P}}
+
+316:4 **Nico Salm**, Dheeraj Pasikanti, Jinming Liu
+
+## Problems
+
+The questions in this discussion assignment use the chimpanzee data set.
+In answering these questions, you may assume the following in models for the data:
+
+1. all trials are independent
+2. trials made with a partner have the same chance of being pro-social, even if the identities of the actors or partners differ.
+
+### Problem 1
+
+#### A
+
+Using the chimpanzee data,
+combine all of the trials made without a partner.
+Count the number of pro-social and selfish choices made.
+
+```{r}
+chimp_data <- read.csv('../../data/chimpanzee.csv')
+
+no_partner_data <- chimp_data %>%
+  filter(partner == "none")
+
+# count the number of pro-social and selfish choices made
+choice_counts <- no_partner_data %>%
+  summarise(
+    pro_social_count = sum(prosocial, na.rm = TRUE),
+    selfish_count = sum(selfish, na.rm = TRUE)
+  )
+```
+
+#### B
+
+Write a model for the number of pro-social choices.
+
+```{r}
+n <- sum(chimp_data$prosocial[1], chimp_data$selfish[1]) # total number of trials
+p <- chimp_data$prosocial[1] / n # probability of success (prosocial choice)
+
+# Call the gbinom function with the specified n and p
+binom_plot <- gbinom(n, p)
+print(binom_plot)
+```
+
+#### C
+
+Use the Agresti-Coull method to construct a 95% confidence interval for the probability that a chimpanzee makes the pro-social choice in experimental conditions when there is no partner present.
+
+```{r}
+# the Agresti-Coull interval
+x = 83
+n = 83 + 97
+
+confidence_int = prop.test(x, n, conf.level = 0.95)
+confidence_int$conf.int
+```
+
+#### D
+
+We assess with 95% confidence that the true probability of pro-social behavior for chimps with no partners is between 0.387 and 0.537
+
+### Problem 2
+
+Using the same data as in the previous problem,
+do the following.
+
+#### A
+
+State hypotheses for a two-sided hypothesis test that the probability that a chimpanzee makes the pro-social choice over the long run is equal to 0.5 versus the alternative that this probability is not 0.5.
+
+Null Hypothesis (H₀): p = 0.5
+
+Alternative Hypothesis (H₁): p ≠ 0.5
+
+
+#### B
+
+Pick a test statistic, state the sampling distribution of this statistic if the null hypothesis is true,
+and compute a p-value for the test.
+
+```{r}
+t = (x - n * 0.5) / sqrt(n * 0.5 * 0.5)
+
+# the p-value
+p_value = 2 * pt(-abs(t), df = n - 1)
+```
+
+#### C
+
+Interpret these results in the context of the experiment following the examples from lecture notes.
+
+We see p = 0.29 > 0.05, so we cannot reject the null hypothesis.
+
+### 3
+
+Use functions from the file `ggprob.R` to visualize the calculation of the p-value by graphing an appropriate probability distribution and using differential coloring to indicate what in the plot corresponds to the p-value.
+Include a title and meaningful axis labels.
+
+```{r}
+
+binom_plot <- ggplot(data.frame(x = 0:n), aes(x)) +
+  geom_binom_density(n, 0.5) +
+  scale_x_continuous(name = "Number of Prosocial Choices") +
+  scale_y_continuous(name = "Probability Density") +
+  geom_vline(xintercept = x, color = "red", linetype = "dashed") +
+  geom_vline(xintercept = n - x, color = "red", linetype = "dashed") +
+  ggtitle("Visualization of p-value for Prosocial Behavior") +
+  annotate("text", x = x, y = 0, label = paste("p =", round(p_value, 4)), vjust = -1)
+
+print(binom_plot)
+
+```
+
