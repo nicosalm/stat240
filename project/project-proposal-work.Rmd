@@ -1,0 +1,52 @@
+---
+title: "Project Proposal Work"
+output: html_document
+---
+
+
+### Names of the students in the group.
+
+**Dheeraj Pasikanti**, Nico Salm, Jinming Liu
+### Communication Plan
+
+> A brief description of how the group will communicate and work together.
+
+- When during the week can the group meet? Consider needs of all group members.
+Tuesday/Thursday Mornings (around 9)
+
+- What platforms will the group use to communicate and share documents?
+Text, email, drive
+
+### Questions of Interest
+
+> The question or questions of interest that motivate the planned study.
+
+Does the performance of the U.S. economy have a statistically significant influence on the economic growth of other countries, and if so, what is the nature of this influence in terms of variables such as trade and CPI? Is it stratiﬁed by region and income group, and if so, how?
+### Source of the data
+
+> The source(s) of data.
+    
+1. World Economic Outlook. (October 2023). Real GDP growth by annual percent change. Retrieved on November 5, 2023, from https://www.imf.org/external/datamapper/NGDP_RPCH@WEO/OEMDC/ADVEC/
+
+* This data was collected by World Economic Outlook and measures the real GDP growth of countries around the world. The data was collected by the IMF and is updated every year. The key variables in this data set are the real GDP growth of each country, the year, and the country. A single row of the data set represents the real GDP growth of a country in a given year. The larger population is the real GDP growth of all countries in the world.
+
+2. The World Bank. (October 2023). World Development Indicators. Retrieved on November 5, 2023, from https://databank.worldbank.org/source/world-development-indicators
+
+* This data was collected by the World Bank and categorizes countries by numerous development indicators including region and income group. The data was collected by the World Bank and is updated every year. The key variables in this data set are the region, income group, and country. There are many other variables too. A single row of the data set represents the region and income group of a country. The larger population is the region and income group of all countries in the world.
+
+### Graph
+
+> Include a description of a graph which will show how the data informs the primary question of interest.
+
+We will create a faceted scatterplot of the real GDP growth of countries over time. The x-axis will be the year and the y-axis will be the real GDP growth. The countries will be faceted by region. This will allow us to see the real GDP growth of countries over time and how it differs by region.
+
+We will also create a faceted scatterplot of the real GDP growth of countries over time. The x-axis will be the year and the y-axis will be the real GDP growth. The countries will be faceted by income group. This will allow us to see the real GDP growth of countries over time and how it differs by income group.
+
+### Model
+
+> Include a description of a possible model for the data and associated methods of inference or prediction.
+
+We will use a multivariable linear regression model to predict the real GDP growth of countries based on the year, region, and income group. We will use a multivariable linear regression model to predict the real GDP growth of countries based on the year, region, and income group. Since region and income group are categorical variables, we will use dummy variables to represent them in the model. We will use the `lm()` function to create the model and the `summary()` function to summarize the model. We will use the `predict()` function to predict the real GDP growth of countries based on the year, region, and income group.
+
+We will get a p-value for each variable in the model. We will use the p-values to determine which variables are statistically significant. We will also use the R-squared value to determine how much of the variation in the real GDP growth of countries is explained by the model.
+ 

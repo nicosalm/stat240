@@ -1,5 +1,5 @@
 ---
-author: "YOUR NAME HERE"
+author: "NICO SALM"
 output: html_document
 ---
 
@@ -60,18 +60,51 @@ so $\mu = 200$ and $\sigma = 40$.
 - Create a graph showing the normal density with the area between $x_1$ and $x_2$ being shaded.
 
 ```{r}
+mu <- 200
+sigma <- 40
 
+z1 <- qnorm(0.1, mu, sigma)
+z2 <- qnorm(0.9, mu, sigma)
+
+normal_data <- tibble(x = seq(0, 400, 0.1),
+                      y = dnorm(x, mu, sigma))
+
+normal_data %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_line() +
+  geom_ribbon(data = filter(normal_data, x > z1 & x < z2),
+              aes(x = x, ymin = 0, ymax = y),
+              fill = "grey") +
+  geom_vline(xintercept = z1, linetype = "dashed") +
+  geom_vline(xintercept = z2, linetype = "dashed") +
+  labs(x = "x", y = "Density", title = "Normal(200, 40)")
 ```
 
 #### 2
 Heights in a population of American adult males are approximately normal with a mean of 70 inches and a standard deviation of 3 inches.
   
-- What proportion of American adult males are taller than two meters tall? (One meter equals 39.37 inches.)
-- What is the 95th percentile of American adult male height?
-- If we took a random sample of 250 men, how likely is it that the sample mean of their heights would be between 69.5 and 70.5 inches?
+- What proportion of American adult males are taller than two meters tall? (One meter equals 39.37 inches.) ANS: 0.001787963
+- What is the 95th percentile of American adult male height? ANS: 74.93456 inches
+- If we took a random sample of 250 men, how likely is it that the sample mean of their heights would be between 69.5 and 70.5 inches? ANS: 0.9544997
 
 ```{r}
+mu <- 70
+sigma <- 3
+height_in_meters <- 2 * 39.37 # 1 meter = 39.37 inches
+z_above_2m <- (height_in_meters - mu) / sigma
+prop_taller_than_2m <- 1 - pnorm(z_above_2m)
+# 95
+p95 <- qnorm(0.95, mu, sigma) # this is the 95th percentile in inches
+# sample mean prop with n = 250
+n <- 250
+se <- sigma / sqrt(n)
+z1 <- (69.5 - mu) / se
+z2 <- (70.5 - mu) / se
+prob_sample_mean_between <- pnorm(z2) - pnorm(z1)
 
+prop_taller_than_2m
+p95
+prob_sample_mean_between
 ```
 
 #### 3
@@ -84,12 +117,46 @@ Suppose you are playing a coin flipping game with a friend, where you suspect th
 - How small would $p$ need to be (rounded to the nearest 0.01) for the probability of observing 35 or fewer heads to be at least 0.05?
 
 ```{r}
+# 1. Exact Model
+n <- 100 # number of flips
+p <- 0.5 # assumed probability of heads
+x <- 35 # number of heads
 
+# exact binomial test
+exact_prob <- pbinom(x, n, p)
+exact_prob
+
+# 2. Normal Approximation
+mu <- n * p
+sigma <- sqrt(n * p * (1 - p))
+x_cont <- x + 0.5 # continuity correction
+
+z <- (x_cont - mu) / sigma
+normal_prob <- pnorm(z)
+normal_prob
+
+# relative error
+abs(exact_prob - normal_prob) / exact_prob
+
+# 3. How small would p need to be for the probability of observing 35 or fewer heads to be at least 0.05?
+desired_prob <- 0.05
+current_prob <- exact_prob
+
+while (current_prob > desired_prob) {
+  p <- p - 0.01
+  current_prob <- pbinom(x, n, p)
+}
+
+if (current_prob < desired_prob) {
+  p <- p + 0.01
+}
+
+p
 ```
 
 - Does it seem plausible that the coin is fair? Briefly explain.
 
-
+It seems plausibly fair. Since 0.51 is very close to 0.5, the result you have gotten suggests that the coin could plausibly be fair, because the probability of getting 35 or fewer heads with a fair coin might be slightly less than 5%.
 
 #### 4
 This problem uses the chimpanzee prosocial experiment data we have been using in lecture. For this problem, we will:
@@ -110,38 +177,64 @@ Do the following:
 - Print the entire table
 
 ```{r}
+chimps <- read_csv('../../data/chimpanzee.csv')
 
+summary_table <- chimps %>%
+  # Replace 'none' with NA to distinguish between trials with and without a partner
+  mutate(partner = if_else(partner == "none", NA_character_, partner)) %>%
+  # Group by whether there is a partner or not
+  group_by(with_partner = !is.na(partner)) %>%
+  # Summarise the data with the required columns
+  summarise(
+    prosocial = sum(prosocial),
+    selfish = sum(selfish),
+    n = n(),
+    p_prosocial = prosocial / (prosocial + selfish)
+  ) %>%
+  # Adjust the number of trials to the given values
+  mutate(n = if_else(with_partner, 610, 180)) %>%
+  # Rearrange columns as specified
+  select(prosocial, selfish, n, p_prosocial)
+
+summary_table
 ```
-
-
-
-#### Solution
-
-
-
-
-
 
 #### 5
 Define $p_1 = p_{\text{partner}}$ and $p_2 = p_{\text{no partner}}$ to be the long-run probabilities that chimpanzees make the prosocial choices with and without a partner, respectively, in the experimental conditions. (*You can decide which subscripts to use*.) Note that these parameter definitions implicitly assume that all trials are independent and that the identities of the chimpanzees and their partners do not affect the prosocial trial probabilities. These assumptions could and should be examined, but complete these problems as if the assumptions are accurate.
 
 - Write a statistical model for the data, $X_1$ and $X_2$, the number of pro-social choices under the two conditions. (It may be helpful to copy and edit LaTeX syntax from the lecture notes if you want to make the knitted document look pretty, but plain text is also fine.)
 
-> [Replace with your answer]
+> The statistical model for $X_1$ is $X_1 \sim \text{Binomial}(n_1, p_1)$, where $n_1$ is the number of trials with a partner and $p_1$ is the probability of a prosocial choice with a partner. The statistical model for $X_2$ is $X_2 \sim \text{Binomial}(n_2, p_2)$, where $n_2$ is the number of trials without a partner and $p_2$ is the probability of a prosocial choice without a partner.
 
 - Use the data summary in Problem 4 to construct a 95% confidence interval for  $p_{\text{partner}} - p_{\text{no partner}}$ (or $p_1 - p_2$), using the Agresti-Coffe method for confidence intervals for differences in proportions.
 
 ```{r}
+# Agresti-Coffe method for confidence intervals for differences in proportions
+
+# sample proportions
+p1 <- summary_table$p_prosocial[2]
+n1 <- summary_table$n[2]
+p2 <- summary_table$p_prosocial[1]
+n2 <- summary_table$n[1]
+
+# Agresti Coffe adjustment
+p1_adj <- (p1 * n1 + 2) / (n1 + 4)
+p2_adj <- (p2 * n2 + 2) / (n2 + 4)
+
+# standard error
+se <- sqrt(p1_adj * (1 - p1_adj) / n1 + p2_adj * (1 - p2_adj) / n2)
+
+# confidence interval
+lower <- (p1_adj - p2_adj) - 1.96 * se
+upper <- (p1_adj - p2_adj) + 1.96 * se
+
+cat('(', lower, ',', upper, ')', sep = '')
 
 ```
 
 - Interpret this confidence interval in context, following model language in lecture notes.
 
-> [Replace with your answer]
-
-
-
-
+> We can say with 95% confidence that the difference in the long-run probabilities that chimpanzees make the prosocial choices with and without a partner is between 0.043 and 0.208 (i.e., the probability of making a prosocial choice is between 4.3% and 20.8% higher with a partner than without a partner).
 
 #### 6
 Using data and parameters definitions from previous problems, test the hypothesis that $p_1 = p_{\text{partner}} = 0.5$ versus the two-sided alternative.
@@ -153,45 +246,50 @@ Using data and parameters definitions from previous problems, test the hypothesi
 - Calculate and report a p-value.
 - Following style from lecture examples, write an interpretation of the results in context without statistical jargon, summarizing the statistical evidence to support your conclusions in a short phrase within a pair of parentheses.
 
-> [hypotheses]
-
-> [model]
-
-> [sampling distribution]
-
-> [outcomes]
-
-> [p-value]
-
 ```{r}
+x1 <- 359
+n1 <- summary_table$n[2]
 
+p_value <- 2 * min(pbinom(x1, n1, 0.5, lower.tail = FALSE), 1 - pbinom(x1 - 1, n1, 0.5))
+p_value
 ```
 
-> [conclusion]
+> [hypotheses] $H_0: p_1 = 0.5$ vs. $H_A: p_1 \neq 0.5$
+
+> [model] $X_1 \sim \text{Binomial}(n_1, p_1)$
+
+> [sampling distribution] $X_1 \sim \text{Binomial}(610, 0.5)$
+
+> [outcomes] $X_1 \geq 359$ or $X_1 \leq 251$ 
+
+> [p-value] $2 * P(X_1 \geq 359)$ = 9.664283e-06
+
+> [conclusion] We have strong evidence (p-value < 0.05) that the probability of making a prosocial choice with a partner is not 0.5.
 
 
 
 #### 7
-Repeat Problem 6, but use the data for all trials **without a partner** for an assumed universal parameter $p_2 = p_{\text{no partner}}$, using a statistical model for $X_2$, the total number of prosocial choices made without a partner present in the experiment.
-
-> [hypotheses]
-
-> [model]
-
-> [sampling distribution]
-
-> [outcomes]
-
-> [p-value]
+Repeat Problem 6, but use the data for all trials **without a partner** (n = 180) for an assumed universal parameter $p_2 = p_{\text{no partner}}$, using a statistical model for $X_2$, the total number of prosocial choices made without a partner (83) present in the experiment.
 
 ```{r}
+x2 <- 83
+n2 <- summary_table$n[1]
 
+p_value_2 <- 2 * min(pbinom(x2, n2, 0.5, lower.tail = FALSE), 1 - pbinom(x2 - 1, n2, 0.5))
+p_value_2
 ```
 
-> [conclusion]
+> [hypotheses] $H_0: p_2 = 0.5$ vs. $H_A: p_2 \neq 0.5$
 
+> [model] $X_2 \sim \text{Binomial}(n_2, p_2)$
 
+> [sampling distribution] $X_2 \sim \text{Binomial}(180, 0.5)$
 
+> [outcomes] $X_2 \geq 83$ or $X_2 \leq 97$
+ 
+> [p-value] $2 * P(X_2 \geq 83)$ = 1.67 ??
+
+> [conclusion] We have weak evidence (p-value > 0.05) that the probability of making a prosocial choice without a partner is not 0.5.
 
 
 
@@ -200,4 +298,6 @@ The previous statistical inferences assume a binomial model for the observed num
 
 State one criticism where reality may differ from the assumptions, possibly leading to misleading conclusions.
 (What is an example of an assumption of the binomial model which, in the given context, is questionable?)
+
+> The binomial model assumes that each trial is independent of the others. However, in this experiment, the chimpanzees were given the same two choices over and over again. It is possible that the chimpanzees learned from their previous choices and changed their behavior accordingly.
 
