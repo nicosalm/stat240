@@ -1,0 +1,113 @@
+---
+title: "STAT 240 Discussion 10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+library(tidyverse)
+source("../../scripts/viridis.R")
+source("../../scripts/ggprob.R")
+```
+
+316:4 ``**Nico Salm**, Dheeraj Pasikanti, Jinming Liu, Michelle Kim``
+
+<br/>
+
+For today's discussion, you should spend about **half the time working on this file**, and then spend the **other half working in your groups on the outline**. Make sure to check in with your TA if you have any questions about your proposal feedback!
+
+<br/>
+
+
+## Data
+
+The data set `boston-marathon-2010-sample.csv` contains a random sample of 50 men and 50 women, aged 35--39, who ran in and completed the 2010 Boston Marathon.
+Times are in minutes.
+
+```{r}
+bm <- read_csv("../../data/boston-marathon-2010-sample.csv")
+```
+
+---
+
+## Problems
+
+The questions in this discussion assignment use a subset of the 2010 Boston Marathon data set described above.
+
+### Problem 1
+
+Display the data using side-by-side boxplots with the sex of the competitor on the x axis and their time on the y axis.
+Add an appropriate title and axis labels to the plot.
+
+```{r}
+ggplot(bm, aes(x = Sex, y = Time)) +
+  geom_boxplot() +
+  labs(title = "Boston Marathon 2010: Competitor Times by Sex",
+       x = "Sex",
+       y = "Time") +
+  theme_minimal()
+```
+
+
+### Problem 2
+
+Create and display a table with a numerical summary of the data.
+Calculate the sample size, mean time, standard deviation of the times, and standard error of the mean ($s/\sqrt{n}$) separately for each sex.
+This table will have one row for each sex.
+
+```{r}
+table_data <- bm %>% 
+  group_by(Sex) %>% 
+  summarise(n = n(),
+            mean = mean(Time),
+            sd = sd(Time),
+            se = sd(Time)/sqrt(n))
+table_data
+```
+
+
+### Problem 3
+
+Using the function `t.test()`, construct separate 95% confidence intervals for each sex for the mean time to complete the 2010 Boston Marathon among all competitors of that sex aged 35--39.
+
+```{r}
+
+ci_male <- t.test(bm$Time[bm$Sex == "male"], conf.level = 0.95)
+ci_female <- t.test(bm$Time[bm$Sex == "female"], conf.level = 0.95)
+
+ci_male
+ci_female
+
+```
+
+
+### Problem 4
+
+Without using the function `t.test()` write code to calculate the end points of the 95% confidence interval for the mean time for women aged 35--39 to complete the 2010 Boston Marathon.
+
+```{r}
+bm_filtered <- bm %>% filter(Sex == "female")
+
+mean_time <- mean(bm_filtered$Time)
+sd_time <- sd(bm_filtered$Time)
+n <- nrow(bm_filtered)
+std_error <- sd_time/sqrt(n)
+
+alpha = 0.05
+
+t_crit <- qt(1 - alpha/2, df = n - 1)
+
+lower <- mean_time - t_crit * std_error
+upper <- mean_time + t_crit * std_error
+
+c(lower, upper)
+
+```
+
+
+### Problem 5
+
+Write an interpretation of the confidence interval from the previous problem in context, following course examples.
+
+Based on our sample, we are 95% confident that the true mean completion time for the 2010 Boston Marathon among women aged 35-39 lies between 230.76 and 253.12 minutes. This interval estimates the population average and implies a 5% chance that it does not include the true mean.
+
