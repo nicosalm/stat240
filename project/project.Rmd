@@ -1,0 +1,250 @@
+---
+author: "Nico Salm, Dheeraj Pasikanti, Jinming Liu"
+date: "2023-11-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+data(mtcars) # load the mtcars dataset, a built-in dataset in R
+```
+
+# Vehicle Analysis Report for the `mtcars` Data Set: Assessing the Relationship Between MPG and WT and its Implications for Automotive Design and Environmental Impact
+Authored by Nico Salm, Dheeraj Pasikanti, Jinming Liu
+
+## Research Question
+Cars are a major source of pollution, and fuel efficiency is an important factor in determining the environmental impact of a car. We are interested in the relationship between the weight of a car and its fuel efficiency. We will use the `mtcars` data set to answer the following research question:
+
+> "How does the weight of a car influence its fuel efficiency, and what implications might this have for automotive design and environmental impact?"
+
+---
+
+## Hypothesis
+> "The heavier a car is, the less fuel efficient it will be."
+
+Thesis Statement: The weight of a car has a statistically significant effect on its fuel efficiency, and automotive designers can use this information to design lighter cars that are more fuel efficient, which will reduce the environmental impact of cars.
+
+We will assess using a linear regression model and hypothesis testing:
+
+* H0: The weight of a car has **no** effect on its fuel efficiency.
+* H1: The weight of a car has an effect on its fuel efficiency.
+* We will evaluate with $\alpha = 0.05$
+
+---
+
+## Background
+The `mtcars` dataset was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models). 
+
+There are 32 observations and 11 variables in the data set. This is a fairly small data set, so we will need to be careful about generalizing our results to the entire population of cars. There are no missing values in the data set. We have columns for MPG (miles per gallon of fuel) and WT (vehicle weight), which are the variables we are interested in. We also have columns for other variables that might be useful in our analysis, such as number of cylinders, horsepower, and transmission type.
+
+Source: Henderson and Velleman (1981), Building multiple regression models interactively. Biometrics, 37, 391–411.
+
+This report will be structured as follows:
+
+- Data Exploration (summary statistics and scatter plots to get a sense of the data)
+- Linear Regression (to see if there is a statistically significant relationship between MPG and WT)
+- Error Analysis (to see if the linear model is appropriate for this data set, and to see if there are any outliers)
+- Conclusion (to answer our research question)
+
+---
+
+## Data Exploration
+```{r include=FALSE}
+# We will begin with data exploration, where we use summary statistics and scatter plots to get a sense of the data.
+
+# Summary Statistics
+dim(mtcars)
+names(mtcars)
+summary(mtcars)
+```
+
+### Graphical Summaries
+
+```{r, echo=FALSE}
+# Scatter Plot
+ggplot(mtcars, aes(x = wt, y = mpg)) + 
+  geom_point() +
+  labs(title = "MPG vs Car Weight", x = "Weight (1000 lbs)", y = "Miles Per Gallon") +
+  geom_smooth(method = "lm", color = "blue")
+```
+
+> We see that there is a negative correlation between MPG and WT on this scatterplot, which supports conclusions for the primary question. Further analysis is required to determine if this relationship is statistically significant.
+
+```{r, echo=FALSE}
+
+```{r, echo=FALSE}
+# Histogram of MPG
+ggplot(mtcars, aes(x = mpg)) + 
+  geom_histogram(binwidth = 1, fill = "blue", color = "black") +
+  labs(title = "Distribution of MPG", x = "Miles Per Gallon", y = "Count")
+```
+
+> We see that the distribution of MPG is fairly normally distributed on this histogram, with a slight skew to the right. This is what we would expect, since most cars are designed to be fuel efficient.
+
+```{r, echo=FALSE}
+# Histogram of WT
+ggplot(mtcars, aes(x = wt)) + 
+  geom_histogram(binwidth = 0.25, fill = "green", color = "black") +
+  labs(title = "Distribution of Car Weight", x = "Weight (1000 lbs)", y = "Count")
+```
+
+> We see that the distribution of car weight is fairly normally distributed on this histogram, with a slight skew to the left. This is what we would expect, since most cars are designed to be lightweight.
+
+**We will now perform a linear regression to see if there is a statistically significant relationship between MPG and WT.**
+
+---
+
+## Linear Regression
+
+We perform linear regression of a car's MPG on its weight. We will use the `lm()` function to fit a linear model, and the `summary()` function to get a summary of the linear model.
+
+```{r, include=FALSE}
+# Fit the Linear Model
+model <- lm(mpg ~ wt, data = mtcars)
+```
+
+```{r, echo=FALSE}
+# Summary of the Linear Model
+summary(model)
+```
+
+> We obtain the following linear model: $MPG = 37.2851 - 5.3445 * WT$
+
+> We see a p-value of $1.294e-10$, which is less than $\alpha = 0.05$, so we can reject the null hypothesis and conclude that there is a statistically significant relationship between MPG and WT.
+
+### Linear Regression Observations
+* We can see that the p-value is less than 0.05, so we can reject the null hypothesis and conclude that there is a statistically significant relationship between MPG and WT.
+* We can also see that the R-squared value is 0.7528, which means that 75.28% of the variation in MPG can be explained by WT.
+* We can also see that the slope of the regression line is -5.3445, which means that for every 1000 lbs increase in weight, the MPG decreases by 5.3445.
+* We notice that the slope is negative, which means that as the weight of a car increases, the MPG decreases. This makes sense, since heavier cars require more fuel to move.
+* We recognize potential outliers which will be further analyzed in the error analysis section.
+
+### Error Analysis
+
+We will now perform error analysis to see if the linear model is appropriate for this data set, and to see if there are any outliers. We will use the `plot()` function to plot the residuals, fitted values, and Cook's distance.
+
+#### Residuals vs Fitted (Identifying Linearity)
+```{r, echo=FALSE}
+# Plot the Linear Mode
+plot(model, which = 1)
+```
+
+> Residuals vs Fitted: We see that the residuals are randomly distributed around 0, which is what we would expect for a linear model. This suggests that the linear model is appropriate for this data set.
+
+#### Normal Q-Q (Identifying Normality)
+```{r, echo=FALSE}
+# Plot the Linear Mode
+plot(model, which = 2)
+```
+
+> Normal Q-Q: We see that the residuals are fairly normally distributed, which is what we would expect for a linear model. This suggests that the linear model is appropriate for this data set.
+
+#### Scale-Location (Identifying Heteroscedasticity)
+```{r, echo=FALSE}
+# Plot the Linear Mode
+plot(model, which = 3)
+```
+
+> Scale-Location: We see that the residuals are randomly distributed around 0, which is what we would expect for a linear model. This suggests that the linear model is appropriate for this data set.
+
+#### Cook's Distance (Recognizing Influential Points)
+```{r, echo=FALSE}
+# Cooks distance, the measure of influence on the regression line
+plot(model, which = 4)
+```
+
+> Cook's Distance Plot: We see that "Chrysler Imperial," "Toyota Corolla," and "Fiat 128" are identified as potential influential points in the regression model, with "Chrysler Imperial" being the most influential, suggesting these data points might significantly affect the model's outcome. This is not surprising, since these cars are outliers in terms of weight and MPG.
+
+#### Residuals vs Leverage (Identifying Outliers)
+```{r, echo=FALSE}
+
+```{r, echo=FALSE}
+# Plot the Linear Mode
+plot(model, which = 5)
+```
+
+> Residuals vs Leverage: This further reinforces the fact that "Chrysler Imperial," "Toyota Corolla," and "Fiat 128" are outliers in terms of weight and MPG. We recognize that these data points are potential outliers, and will further analyze them in the outlier analysis section.
+
+
+### Outlier Analysis
+We will now perform outlier analysis to further explore the three outliers in this set. We will use the `boxplot()` function to plot the MPG and WT variables.
+
+#### MPG Outlier Analysis
+```{r, echo=FALSE}
+# Boxplot of MPG
+ggplot(mtcars, aes(x = "", y = mpg)) + 
+  geom_boxplot(fill = "blue", color = "black") +
+  labs(title = "Boxplot of MPG", x = "", y = "Miles Per Gallon")
+```
+
+```{r, include=FALSE}
+# Retrieve MPG of Outliers (MPG < 15)
+mpg_outliers <- mtcars[mtcars$mpg < 15, ]
+mpg_outliers
+
+# Retrieve MPG of Outliers (MPG > 30)
+mpg_outliers <- mtcars[mtcars$mpg > 30, ]
+mpg_outliers
+```
+
+> We note that the "Chrysler Imperial" and "Toyota Corolla" are outliers in terms of MPG, with "Chrysler Imperial" having a very low MPG of 14.7, and "Toyota Corolla" having a very high MPG of 33.9. The "Fiat 128" is also an outlier in terms of MPG, with a very low MPG of 32.4.
+
+#### WT Outlier Analysis
+```{r, echo=FALSE}
+# Boxplot of WT
+ggplot(mtcars, aes(x = "", y = wt)) + 
+  geom_boxplot(fill = "green", color = "black") +
+  labs(title = "Boxplot of Car Weight", x = "", y = "Weight (1000 lbs)")
+```
+
+```{r, include=FALSE}
+# Retrieve WT of Outliers (WT > 5)
+wt_outliers <- mtcars[mtcars$wt > 5, ]
+wt_outliers
+```
+
+> We see that the "Chrysler Imperial" is an outlier in terms of weight, with a weight of 5.424.
+
+---
+
+## Discussion and Conclusion
+
+Provide broader interpretations of your analysis and describe how to interpret your results with respect to your question of interest.
+
+> We may conclude that as the weight of a car increases, the MPG decreases. This makes sense, since heavier cars require more fuel to move. This means that if you are looking to purchase a car, you should consider the weight of the car, since heavier cars require more fuel to move. This will help you save money on gas. It will also help the environment, since you will be using less fuel to move your car.
+
+Discuss any potential short-comings of the analysis.
+
+> Potential shortcomings include the fact that the data set is small, with only 32 observations. This means that the results of the analysis might not be generalizable to the entire population of cars. Another potential shortcoming is that the data set is old, with the data being collected in 1974. This means that the results of the analysis might not be generalizable to modern cars. Another potential shortcoming is that the data set is limited, with only 11 variables. This means that there might be other variables that affect MPG that are not included in the data set. Another potential shortcoming is that the data set is not representative of the entire population of cars, since the data set only includes cars from 1973-1974. This means that the results of the analysis might not be generalizable to the entire population of cars.
+
+Discuss potential future directions for additional work
+
+> Potential future direction might include stratifying across other variables, such as number of cylinders, transmission type, and number of gears. This might help us better understand the relationship between MPG and WT. Another potential future direction might include collecting data on modern cars, and seeing if the relationship between MPG and WT still holds. There are a lot of variable factors in car design which might affect MPG, such as engine size, transmission type, and number of gears.
+
+New questions that have arisen from this analysis
+
+> What other factors might we include in a multiple linear regression model to better predict MPG? How do these factors affect MPG? How do these factors interact with WT to affect MPG?
+
+Different methods to address the same questions
+
+> We could use a multiple linear regression model to address the same question. We could also use a different data set to address the same question. We could have also used a different statistical test to address the same question.
+
+New data you might collect to refine your understanding
+
+> We might collect data on modern cars to refine our understanding of the relationship between MPG and WT. We might also collect data on other variables that might affect MPG, such as engine size, transmission type, and number of gears.
+
+Summarize your primary conclusions and the primary evidence that supports these conclusions.
+
+> We conclude that there is a statistically significant relationship between MPG and WT, with a p-value of $1.294e-10$, which is less than $\alpha = 0.05$. We conclude that 75.28% of the variation in MPG can be explained by WT. We conclude that for every 1000 lbs increase in weight, the MPG decreases by 5.3445. We conclude that as the weight of a car increases, the MPG decreases. This makes sense, since heavier cars require more fuel to move. These results suggest that that weight is a significant predictor of MPG. Further, we recognize an inverse relationship between MPG and WT, with a correlation coefficient of -0.8677. This suggests that as the weight of a car increases, the MPG decreases.
+
+
+
+
+
+
+
+
+
+
+
