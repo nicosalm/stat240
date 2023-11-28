@@ -61,7 +61,7 @@ summary(mtcars)
 
 ### Graphical Summaries
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE}
 # Scatter Plot
 ggplot(mtcars, aes(x = wt, y = mpg)) + 
   geom_point() +
@@ -70,8 +70,6 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
 ```
 
 > We see that there is a negative correlation between MPG and WT on this scatterplot, which supports conclusions for the primary question. Further analysis is required to determine if this relationship is statistically significant.
-
-```{r, echo=FALSE}
 
 ```{r, echo=FALSE}
 # Histogram of MPG
@@ -91,13 +89,17 @@ ggplot(mtcars, aes(x = wt)) +
 
 > We see that the distribution of car weight is fairly normally distributed on this histogram, with a slight skew to the left. This is what we would expect, since most cars are designed to be lightweight.
 
+We are looking to confirm that the variables of interest, MPG and WT are normally distributed because we will be using a linear regression model to assess the relationship. A linear regression model assumes that the variables are normally distributed. 
+
+We can see that both MPG and WT are fairly normally distributed, so we can proceed with our analysis.
+
 **We will now perform a linear regression to see if there is a statistically significant relationship between MPG and WT.**
 
 ---
 
-## Linear Regression
+## Analysis (Linear Regression)
 
-We perform linear regression of a car's MPG on its weight. We will use the `lm()` function to fit a linear model, and the `summary()` function to get a summary of the linear model.
+We perform linear regression of a car's MPG on its weight. We will use the `lm()` function to fit a linear model, and the `summary()` function to get a summary of the linear model. We will use the results to determine whether a car's weight has a **statistically significant effect** on its fuel efficiency.
 
 ```{r, include=FALSE}
 # Fit the Linear Model
@@ -158,8 +160,6 @@ plot(model, which = 4)
 
 #### Residuals vs Leverage (Identifying Outliers)
 ```{r, echo=FALSE}
-
-```{r, echo=FALSE}
 # Plot the Linear Mode
 plot(model, which = 5)
 ```
@@ -206,6 +206,9 @@ wt_outliers
 
 > We see that the "Chrysler Imperial" is an outlier in terms of weight, with a weight of 5.424.
 
+## Analysis Summary
+> We conclude that there is a statistically significant relationship between MPG and WT, with a p-value of $1.294e-10$, which is less than $\alpha = 0.05$. We conclude that 75.28% of the variation in MPG can be explained by WT. We conclude that for every 1000 lbs increase in weight, the MPG decreases by 5.3445. We conclude that as the weight of a car increases, the MPG decreases. This makes sense, since heavier cars require more fuel to move. These results suggest that that weight is a significant predictor of MPG. Further, we recognize an inverse relationship between MPG and WT, with a correlation coefficient of -0.8677. This suggests that as the weight of a car increases, the MPG decreases.
+
 ---
 
 ## Discussion and Conclusion
@@ -233,10 +236,6 @@ Different methods to address the same questions
 New data you might collect to refine your understanding
 
 > We might collect data on modern cars to refine our understanding of the relationship between MPG and WT. We might also collect data on other variables that might affect MPG, such as engine size, transmission type, and number of gears.
-
-Summarize your primary conclusions and the primary evidence that supports these conclusions.
-
-> We conclude that there is a statistically significant relationship between MPG and WT, with a p-value of $1.294e-10$, which is less than $\alpha = 0.05$. We conclude that 75.28% of the variation in MPG can be explained by WT. We conclude that for every 1000 lbs increase in weight, the MPG decreases by 5.3445. We conclude that as the weight of a car increases, the MPG decreases. This makes sense, since heavier cars require more fuel to move. These results suggest that that weight is a significant predictor of MPG. Further, we recognize an inverse relationship between MPG and WT, with a correlation coefficient of -0.8677. This suggests that as the weight of a car increases, the MPG decreases.
 
 
 
