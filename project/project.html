@@ -367,9 +367,9 @@ are interested in the relationship between the weight of a car and its
 fuel efficiency. We will use the <code>mtcars</code> data set to answer
 the following research question:</p>
 <blockquote>
-<p>“How does the weight of a car influence its fuel efficiency, and what
-implications might this have for automotive design and environmental
-impact?”</p>
+<p>“How does the weight of a car influence its fuel efficiency (in miles
+per gallon), and what implications might this have for automotive design
+and environmental impact?”</p>
 </blockquote>
 <hr />
 </div>
@@ -402,14 +402,15 @@ models).</p>
 <p>There are 32 observations and 11 variables in the data set. This is a
 fairly small data set, so we will need to be careful about generalizing
 our results to the entire population of cars. There are no missing
-values in the data set. We have columns for MPG (miles per gallon of
-fuel) and WT (vehicle weight), which are the variables we are interested
-in. We also have columns for other variables that might be useful in our
-analysis, such as number of cylinders, horsepower, and transmission
-type.</p>
-<p>Source: Henderson and Velleman (1981), Building multiple regression
-models interactively. Biometrics, 37, 391–411.</p>
-<p>This report will be structured as follows:</p>
+values in the data set. We have columns for MPG (fuel efficiency, in
+miles per gallon of fuel) and WT (vehicle weight), which are the
+variables we are interested in. We also have columns for other variables
+that might be useful in our analysis, such as number of cylinders,
+horsepower, and transmission type. These extra variables to not concern
+our analysis, but they might be useful for future analysis.</p>
+<p>Data Source: Henderson and Velleman (1981), Building multiple
+regression models interactively. Biometrics, 37, 391–411.</p>
+<p>This remainder of the report will be structured as follows:</p>
 <ul>
 <li>Data Exploration (summary statistics and scatter plots to get a
 sense of the data)</li>
@@ -445,7 +446,7 @@ distributed on this histogram, with a slight skew to the left. This is
 what we would expect, since most cars are designed to be
 lightweight.</p>
 </blockquote>
-<p>We are looking to confirm that the variables of interest, MPG and WT
+<p>We are looking to confirm that the variables of interest, MPG and WT,
 are normally distributed because we will be using a linear regression
 model to assess the relationship. A linear regression model assumes that
 the variables are normally distributed.</p>
@@ -463,7 +464,10 @@ use the <code>lm()</code> function to fit a linear model, and the
 <code>summary()</code> function to get a summary of the linear model. We
 will use the results to determine whether a car’s weight has a
 <strong>statistically significant effect</strong> on its fuel
-efficiency.</p>
+efficiency, to a level of <span class="math inline">\(\alpha =
+0.05\)</span>.</p>
+<p>We have included this summary to provide context for our statements
+below.</p>
 <pre><code>## 
 ## Call:
 ## lm(formula = mpg ~ wt, data = mtcars)
